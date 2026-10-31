@@ -182,5 +182,62 @@ function finishMemory(){
  `<section class="feature"><p>${first?'⭐ +10 звёзд за первую игру сегодня!':'Повторение укрепляет память. Ты можешь играть ещё.'}</p><p>Молодец! Попробуй назвать слова без подсказки.</p><button class="primary" id="memory-again">🔁 Ещё раз</button><button class="secondary full" id="memory-home">К играм</button></section>`;
  back('#memory-again',startMemory);back('#memory-home',()=>openMemory(ctx));
 }
-window.KIDS_ADVENTURES={openStories,openDialogues,openMemory};
+
+const pictures=[
+{en:'apple',ru:'яблоко',emoji:'🍎'},{en:'banana',ru:'банан',emoji:'🍌'},{en:'cat',ru:'кот',emoji:'🐱'},
+{en:'dog',ru:'собака',emoji:'🐶'},{en:'sun',ru:'солнце',emoji:'☀️'},{en:'moon',ru:'луна',emoji:'🌙'},
+{en:'fish',ru:'рыба',emoji:'🐟'},{en:'frog',ru:'лягушка',emoji:'🐸'},{en:'tree',ru:'дерево',emoji:'🌳'},
+{en:'car',ru:'машина',emoji:'🚗'},{en:'bus',ru:'автобус',emoji:'🚌'},{en:'train',ru:'поезд',emoji:'🚂'},
+{en:'book',ru:'книга',emoji:'📘'},{en:'pencil',ru:'карандаш',emoji:'✏️'},{en:'house',ru:'дом',emoji:'🏠'},
+{en:'flower',ru:'цветок',emoji:'🌻'},{en:'cake',ru:'торт',emoji:'🎂'},{en:'ball',ru:'мяч',emoji:'⚽'},
+{en:'clock',ru:'часы',emoji:'⏰'},{en:'umbrella',ru:'зонт',emoji:'☂️'},
+{en:'bird',ru:'птица',emoji:'🐦'},{en:'rabbit',ru:'кролик',emoji:'🐰'},{en:'hat',ru:'шляпа',emoji:'🎩'},
+{en:'shoe',ru:'туфля',emoji:'👞'}];
+function openPictures(api){
+ ctx=api;current=null;
+ ctx.view.innerHTML=title('🖼️','Угадай картинку','Слушай или прочитай слово на английском и найди подходящую картинку.')+
+ `<section class="feature"><h2>24 знакомых предмета</h2><p>Восемь заданий за игру, без таймера и наказаний за ошибки. Для начинающих Pre-A1/A1.</p><button class="primary" id="pictures-start">🎨 Играть с картинками</button><button class="secondary full" id="pictures-exit">← К играм</button></section>`;
+ back('#pictures-start',startPictures);back('#pictures-exit',ctx.onExit);
+}
+function startPictures(){
+ const items=mix(pictures).slice(0,8);
+ current={kind:'pictures',index:0,correct:0,answered:false,items};
+ pictureQuestion();
+}
+function pictureQuestion(){
+ const s=current;if(!s||s.kind!=='pictures')return;
+ if(s.index>=s.items.length){picturesEnd();return;}
+ s.answered=false;
+ const item=s.items[s.index];
+ const choices=mix([item,...mix(pictures.filter(x=>x.en!==item.en)).slice(0,3)]);
+ ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="pictures-back">← Выйти</button><span>${s.index+1}/8</span><span class="badge">Pre-A1 / A1</span></div>
+ <div class="bar"><i style="width:${Math.floor(s.index/8*100)}%"></i></div>
+ <section class="feature"><h1>🖼️ Найди: <span lang="en">${esc(item.en)}</span></h1><button class="sound" id="pictures-listen" ${ctx.speakAvailable()?'':'disabled'}>🔊 Послушать слово</button><div class="picture-grid">${choices.map(x=>`<button type="button" class="picture-choice" data-picture="${esc(x.en)}" aria-label="Выбрать: ${esc(x.ru)}"><span aria-hidden="true">${x.emoji}</span><small>${esc(x.ru)}</small></button>`).join('')}</div><div id="picture-feedback" aria-live="polite"></div></section>`;
+ back('#pictures-back',()=>openPictures(ctx));back('#pictures-listen',()=>ctx.speak(item.en));
+ ctx.view.querySelectorAll('[data-picture]').forEach(b=>b.addEventListener('click',()=>{
+  if(s.answered)return;s.answered=true;
+  const ok=b.dataset.picture===item.en;s.correct+=Number(ok);
+  ctx.view.querySelectorAll('[data-picture]').forEach(button=>{
+   button.disabled=true;
+   if(button.dataset.picture===item.en)button.classList.add('good');
+   else if(button===b)button.classList.add('bad');
+  });
+  const box=ctx.view.querySelector('#picture-feedback');
+  box.innerHTML=`<div class="feedback ${ok?'':'retry'}"><strong>${ok?'🌟 Ты нашёл!':'💡 Теперь ты знаешь ответ!'}</strong><p><b lang="en">${esc(item.en)}</b> — ${esc(item.ru)} ${item.emoji}</p><button class="primary" id="picture-next">${s.index===7?'Результат':'Дальше →'}</button></div>`;
+  back('#picture-next',()=>{s.index++;pictureQuestion();});
+ }));
+}
+function picturesEnd(){
+ const s=current;if(!s)return;
+ ctx.state.pictureWins??={};
+ const key=day(),previous=ctx.state.pictureWins[key]||0;
+ ctx.state.pictureWins[key]=Math.max(s.correct,previous);
+ if(s.correct>=6&&previous<6)ctx.state.xp=(ctx.state.xp||0)+10;
+ ctx.save();current=null;
+ ctx.view.innerHTML=title(s.correct>=6?'🎖️':'🌻',s.correct>=6?'Художник-исследователь!':'Становишься внимательнее!',`Ты нашёл ${s.correct} из 8 картинок.`)+
+ `<section class="feature"><p>Повторяй слово вслух, показывая предмет в комнате или на рисунке. Найти все картинки с первого раза необязательно!</p><button class="primary" id="pictures-again">🔁 Ещё картинки</button><button class="secondary full" id="pictures-done">К играм</button></section>`;
+ back('#pictures-again',startPictures);back('#pictures-done',()=>openPictures(ctx));
+}
+
+window.KIDS_ADVENTURES={openStories,openDialogues,openMemory,openPictures};
 })();
