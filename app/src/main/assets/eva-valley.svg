@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="t d">
+<title id="t">Сказочная долина Евы</title><desc id="d">Волшебный лес с замком, разноцветными домиками, рекой, радугой, цветами и нежными облаками.</desc>
+<defs>
+<linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c7ecff"/><stop offset=".74" stop-color="#f9e9fe"/><stop offset="1" stop-color="#fff1cb"/></linearGradient>
+<linearGradient id="hill" x2=".2" y2="1"><stop stop-color="#a7e3bb"/><stop offset="1" stop-color="#5fbca4"/></linearGradient>
+<linearGradient id="roof" x2="0" y2="1"><stop stop-color="#ffb4c0"/><stop offset="1" stop-color="#d979a4"/></linearGradient>
+<linearGradient id="river" x2=".7" y2="1"><stop stop-color="#85daeb"/><stop offset="1" stop-color="#4385bf"/></linearGradient>
+<filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#514784" flood-opacity=".15"/></filter>
+<g id="cloud" fill="#fff" opacity=".9"><ellipse cx="38" cy="24" rx="45" ry="21"/><circle cx="15" cy="19" r="22"/><circle cx="46" cy="8" r="27"/><circle cx="75" cy="21" r="21"/></g>
+<g id="tree"><path d="M-8,36V0H8V36" fill="#8e674f"/><path d="M0-75Q-53-36-39-10Q-73 15-25 20Q-21 54 18 24Q67 28 44-8Q63-35 24-43Q10-84 0-75" fill="#76cba6" stroke="#5aa88d" stroke-width="5"/><circle cx="-17" cy="-22" r="6" fill="#ffbfc7"/><circle cx="20" cy="0" r="6" fill="#fff0a5"/></g>
+<g id="flower"><path d="M0 0V-20" stroke="#6ab18b" stroke-width="3"/><ellipse cx="-6" cy="-11" rx="8" ry="4" transform="rotate(24 -6 -11)" fill="#6fcd9b"/><circle cy="-23" r="6" fill="#fbd170"/><g fill="#faaccd"><circle cx="0" cy="-32" r="6"/><circle cx="0" cy="-14" r="6"/><circle cx="-9" cy="-23" r="6"/><circle cx="9" cy="-23" r="6"/></g><circle cy="-23" r="4" fill="#ffe17c"/></g>
+<g id="star" fill="#fff5ad"><path d="M0-11L3-3 11 0 3 3 0 11-3 3-11 0-3-3Z"/></g>
+</defs>
+<path fill="url(#sky)" d="M0 0H960V500H0Z"/>
+<!-- rainbow across the distant horizon -->
+<path d="M493 190 A220 220 0 0 1 933 190" fill="none" stroke="#ffbaca" stroke-width="25" opacity=".62"/>
+<path d="M507 190 A206 206 0 0 1 919 190" fill="none" stroke="#ffe3a0" stroke-width="23" opacity=".68"/>
+<path d="M523 190 A190 190 0 0 1 903 190" fill="none" stroke="#b9f2b8" stroke-width="20" opacity=".7"/>
+<path d="M535 190 A178 178 0 0 1 891 190" fill="none" stroke="#b8d7fe" stroke-width="19" opacity=".64"/>
+<circle cx="150" cy="73" r="48" fill="#fff1bb" opacity=".8"/>
+<circle cx="150" cy="73" r="34" fill="#ffe6a2"/>
+<g transform="translate(36 36) scale(1.25)"><use href="#cloud"/></g>
+<g transform="translate(286 75) scale(.75)"><use href="#cloud"/></g>
+<g transform="translate(735 38) scale(.98)"><use href="#cloud"/></g>
+<path d="M0 272C120 175 237 217 317 252S480 230 587 183S800 205 960 252V500H0Z" fill="#bfe8cc"/>
+<path d="M0 316C180 220 323 308 456 289S715 235 960 328V500H0Z" fill="url(#hill)"/>
+<path d="M0 402C159 351 284 387 395 392S691 330 960 394V500H0Z" fill="#8acfaa"/>
+<!-- winding brook and path -->
+<path d="M576 280C522 324 530 353 608 386S781 420 739 500H960V441Q809 393 747 368T731 270" fill="url(#river)" opacity=".85"/>
+<path d="M568 282C518 319 545 343 619 375S793 410 747 493" fill="none" stroke="#f3fbff" stroke-width="6" stroke-dasharray="24 29" opacity=".7"/>
+<path d="M190 500C270 414 417 399 481 343C504 326 493 308 474 294" stroke="#ffeccc" stroke-width="42" fill="none" stroke-linecap="round"/>
+<path d="M190 500C270 414 417 399 481 343C504 326 493 308 474 294" stroke="#e7caa7" stroke-width="2" fill="none" stroke-dasharray="6 18" opacity=".4"/>
+<!-- magical castle on the hill -->
+<g transform="translate(400 85)" filter="url(#shadow)">
+ <path d="M-87 191V94L-53 80V190Z" fill="#a29add" stroke="#8076bc" stroke-width="4"/>
+ <path d="M49 195V85L84 77V195Z" fill="#b6a7e6" stroke="#8076bc" stroke-width="4"/>
+ <path d="M-99 96 -68 33 -40 97Z" fill="#ec9ac5" stroke="#b870a2" stroke-width="3"/>
+ <path d="M37 85 67 22 98 85Z" fill="#efa2cc" stroke="#b870a2" stroke-width="3"/>
+ <path d="M-48 192V62H51V192Z" fill="#c2b4ee" stroke="#8076bc" stroke-width="5"/>
+ <path d="M-58 69 -1 0 61 69Z" fill="url(#roof)" stroke="#b870a2" stroke-width="4"/>
+ <path d="M-19 194V141Q1 106 22 141V194Z" fill="#896db1"/>
+ <path d="M-11 105V88Q0 71 13 88V105Z" fill="#fff7c9"/>
+ <path d="M-78 148V131Q-67 118-57 131V148ZM58 145V127Q70 115 79 127V145Z" fill="#fff2bf"/>
+ <path d="M-69 38V-10" stroke="#8d78b5" stroke-width="3"/><path d="M-68 -10h34l-16 14Z" fill="#ffe4a0"/>
+</g>
+<!-- rounded forest trees -->
+<g transform="translate(60 305) scale(1.05)"><use href="#tree"/></g>
+<g transform="translate(121 282) scale(.82)"><use href="#tree"/></g>
+<g transform="translate(867 327) scale(1.1)"><use href="#tree"/></g>
+<g transform="translate(914 306) scale(.8)"><use href="#tree"/></g>
+<g transform="translate(295 340) scale(.62)"><use href="#tree"/></g>
+<g transform="translate(767 305) scale(.66)"><use href="#tree"/></g>
+<!-- strawberry candy house -->
+<g transform="translate(155 295)" filter="url(#shadow)">
+ <path d="M-71 67V-6Q-46-48 0-43Q44-48 71-6V67Z" fill="#fff5e2" stroke="#e6c6aa" stroke-width="5"/>
+ <path d="M-82 3Q-68-74 0-80Q75-73 83 3Z" fill="url(#roof)" stroke="#d783a1" stroke-width="4"/>
+ <circle cx="-35" cy="-32" r="8" fill="#fff1c4"/><circle cx="25" cy="-46" r="9" fill="#fff1c4"/>
+ <path d="M-20 69V21Q0-2 20 21V69Z" fill="#c999d4"/>
+ <circle cx="-39" cy="23" r="11" fill="#a6e6fc"/><circle cx="42" cy="23" r="11" fill="#a6e6fc"/>
+ <path d="M-48 12V34M-59 23h22M33 12v22M22 23h22" stroke="#fff" stroke-width="3"/>
+</g>
+<!-- owl bookshop -->
+<g transform="translate(760 284)" filter="url(#shadow)">
+ <path d="M-65 61V-8L0-49 65-8V61Z" fill="#e8deff" stroke="#a69dd9" stroke-width="5"/>
+ <path d="M-82-6 0-78 82-6Z" fill="#ffd79d" stroke="#eab16e" stroke-width="5"/>
+ <path d="M-21 61V15Q0-5 20 15V61Z" fill="#c08bbf"/>
+ <path d="M-55 9h30v24h-30Z M28 9h28v24H28Z" fill="#a8e7f5" stroke="#fff" stroke-width="4"/>
+ <circle cx="5" cy="-34" r="12" fill="#fff8dd"/>
+ <path d="M-15-33h38" stroke="#f5a5b8" stroke-width="5" stroke-linecap="round"/>
+</g>
+<g fill="#fef5d0" opacity=".87">
+<circle cx="575" cy="122" r="4"/><circle cx="614" cy="207" r="3"/><circle cx="279" cy="134" r="3"/><circle cx="695" cy="129" r="4"/>
+</g>
+<g transform="translate(600 133)"><use href="#star"/></g><g transform="translate(277 161) scale(.6)"><use href="#star"/></g>
+<g transform="translate(720 207) scale(.8)"><use href="#star"/></g>
+<g transform="translate(56 448)"><use href="#flower"/></g>
+<g transform="translate(89 463) scale(.75)"><use href="#flower"/></g>
+<g transform="translate(133 464)"><use href="#flower"/></g>
+<g transform="translate(317 475) scale(.9)"><use href="#flower"/></g>
+<g transform="translate(355 464) scale(.65)"><use href="#flower"/></g>
+<g transform="translate(829 467)"><use href="#flower"/></g>
+<g transform="translate(870 463) scale(.8)"><use href="#flower"/></g>
+<g transform="translate(919 479)"><use href="#flower"/></g>
+<path d="M289 208q11-14 21 0q-11-4-21 0M310 212q8-12 16 0q-8-3-16 0" stroke="#9b85c1" stroke-width="4" stroke-linecap="round" fill="none"/>
+</svg>
