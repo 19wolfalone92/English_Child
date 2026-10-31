@@ -85,8 +85,20 @@ Object.defineProperty(view,'innerHTML',{get(){return this._html||'';},set(html){
  this._html=html;
  this.nodes=new Map();
  this.options=[...html.matchAll(/data-answer="([^"]+)"/g)].map(match=>fakeElement({answer:match[1]}));
+ this.dataNodes=new Map();
 }});
-view.querySelectorAll=function(sel){return sel==='[data-answer]'?this.options:[];};
+view.querySelectorAll=function(sel){
+ if(sel==='[data-answer]')return this.options;
+ const match=/^\[data-([a-z-]+)\]$/.exec(sel);
+ if(!match)return [];
+ if(!this.dataNodes.has(sel)){
+  const key=match[1],camel=key.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
+  const regex=new RegExp('data-'+key+'="([^"]+)"','g');
+  const nodes=[...this.innerHTML.matchAll(regex)].map(x=>fakeElement({[camel]:x[1]}));
+  this.dataNodes.set(sel,nodes);
+ }
+ return this.dataNodes.get(sel);
+};
 const doc={getElementById(id){return id==='view'?view:get(id);},
  querySelectorAll(sel){return sel==='.bottom button'?buttons:[];}};
 let storage=null;
@@ -139,4 +151,61 @@ assert.equal(persisted.done['day-001'].best,10);
 assert.equal(persisted.correct,10);
 assert.equal(persisted.items[first[0].id].stage,1);
 assert.equal(persisted.xp,100);
-console.log('PASS: 300 sessions, 15 stories/45 questions, 10 dialogues/30 turns, memory game, offline UI and first lesson');
+// Exercise the story reader, comprehension scoring and persistent one-time star reward.
+buttons[1].click();
+view.querySelector('#stories-play').click();
+assert.equal(view.querySelectorAll('[data-story]').length,3);
+view.querySelectorAll('[data-story]')[0].click();
+assert.match(view.innerHTML,/Котёнок и мяч/);
+view.querySelector('#story-questions').click();
+for(const question of window.KIDS_STORIES[0].questions){
+ const good=view.querySelectorAll('[data-q-answer]')[question.correct];
+ assert.ok(good,'story correct option exists');
+ good.click();
+ assert.match(view.querySelector('#quest-notice').innerHTML,/Верно/);
+ view.querySelector('#quest-notice').querySelector('#quest-next').click();
+}
+assert.match(view.innerHTML,/История разгадана/);
+assert.equal(JSON.parse(storage).storyScores['story-01'].best,3);
+assert.equal(JSON.parse(storage).xp,115);
+view.querySelector('#quest-list').click();
+view.querySelector('#quest-back').click();
+// Exercise a complete three-turn conversation.
+view.querySelector('#dialogues-play').click();
+assert.equal(view.querySelectorAll('[data-dialogue]').length,2);
+view.querySelectorAll('[data-dialogue]')[0].click();
+for(const step of window.KIDS_DIALOGUES[0].steps){
+ const good=view.querySelectorAll('[data-dialogue-option]')[step.correct];
+ assert.ok(good);
+ good.click();
+ assert.match(view.querySelector('#dialogue-notice').innerHTML,/Здорово/);
+ view.querySelector('#dialogue-notice').querySelector('#dialogue-next').click();
+}
+assert.match(view.innerHTML,/Разговор завершён/);
+assert.equal(JSON.parse(storage).dialogueScores['dialogue-01'].best,3);
+assert.equal(JSON.parse(storage).xp,130);
+view.querySelector('#dialogue-list').click();
+view.querySelector('#quest-back').click();
+// Picture game reveals the target and awards stars once upon clearing 8 questions.
+view.querySelector('#pictures-play').click();
+view.querySelector('#pictures-start').click();
+for(let n=0;n<8;n++){
+ const en=view.innerHTML.match(/Найди: <span lang="en">([^<]+)</)?.[1];
+ assert.ok(en,'picture target rendered');
+ const good=view.querySelectorAll('[data-picture]').find(b=>b.dataset.picture===en);
+ assert.ok(good,'matching picture exists');
+ good.click();
+ assert.match(view.querySelector('#picture-feedback').innerHTML,/Ты нашёл/);
+ view.querySelector('#picture-feedback').querySelector('#picture-next').click();
+}
+assert.match(view.innerHTML,/Художник-исследователь/);
+assert.equal(JSON.parse(storage).xp,140);
+// Memory game presents ten cards; child can leave without a penalty.
+view.querySelector('#pictures-done').click();
+view.querySelector('#pictures-exit').click();
+view.querySelector('#memory-play').click();
+view.querySelector('#begin-memory').click();
+assert.equal(view.querySelectorAll('[data-memory-card]').length,10);
+view.querySelector('#memory-exit').click();
+assert.match(view.innerHTML,/Мастер памяти/);
+console.log('PASS: 300 lessons, 15 stories/45 Q, 10 dialogues/30 replies, full story + dialogue + picture flows and memory cards');
