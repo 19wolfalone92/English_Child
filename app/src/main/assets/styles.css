@@ -111,3 +111,11 @@ p{line-height:1.52;color:var(--muted);margin:8px 0 16px}
 @media(min-width:640px){main{padding:24px 27px 38px}.top{padding-left:28px;padding-right:28px}.bottom{left:50%;right:auto;width:min(730px,100%);transform:translateX(-50%)}.level-grid{grid-template-columns:repeat(3,1fr)}.play-grid{grid-template-columns:repeat(3,1fr)}.answers{grid-template-columns:1fr 1fr}}
 @media(max-width:350px){.hero-emoji{font-size:75px}.brand strong{font-size:18px}.brand-mark{width:43px;height:43px}.lesson-grid{grid-template-columns:1fr}.bottom button{font-size:10px}.home-stats strong{font-size:19px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.alphabet-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(125deg,#fff0db,#f6ecff)}
+.alphabet-banner h2{margin:0 0 6px}.alphabet-banner p{margin:0;font-size:12px}
+.alphabet-banner .secondary{flex:none;min-height:47px;padding:10px 12px}
+.alphabet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.alphabet-card{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:16px;border:2px solid #e3d1ff;background:#fbf7ff;color:#493077;min-height:130px;padding:12px 6px;gap:3px}
+.alphabet-card strong{font-size:32px;color:#6340aa}.alphabet-card b{font-size:15px}.alphabet-card small{font-size:12px}.alphabet-card span{font-size:18px}
+@media(min-width:600px){.alphabet-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
