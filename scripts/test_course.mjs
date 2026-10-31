@@ -69,6 +69,15 @@ assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
 assert.match(read('app.js'),/localStorage/);
+const java=fs.readFileSync(new URL('../app/src/main/java/com/wolfie/kids/MainActivity.java',import.meta.url),'utf8');
+const manifest=fs.readFileSync(new URL('../app/src/main/AndroidManifest.xml',import.meta.url),'utf8');
+assert.match(java,/ACTION_CREATE_DOCUMENT/,'backup export via Android document picker');
+assert.match(java,/ACTION_OPEN_DOCUMENT/,'backup import via Android document picker');
+assert.match(java,/\.commit\(\)/,'progress saved synchronously');
+assert.match(java,/onBackPressed/,'Android Back override exists');
+assert.match(java,/WebChromeClient/,'confirm dialogs supported');
+assert.match(manifest,/allowBackup="false"/,'Android system backup not used without user choice');
+assert.doesNotMatch(manifest,/android\.permission\.INTERNET/,'children app requires no Internet permission');
 
 function fakeElement(dataset={}){
  return {dataset,disabled:false,textContent:'',_html:'',events:{},classList:{toggle(){},add(){}},
