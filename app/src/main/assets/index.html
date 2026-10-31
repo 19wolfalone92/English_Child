@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="lilac">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#fff9ec">
+  <meta name="theme-color" content="#fff8f3">
   <meta name="color-scheme" content="light">
-  <title>Wolfie Kids · Английский от нуля до B2</title>
+  <title>Wolfie Kids — Сказочный английский</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="extras.css">
+  <link rel="stylesheet" href="storybook.css">
   <script src="content.js" defer></script>
   <script src="phonics.js" defer></script>
   <script src="stories.js" defer></script>
@@ -19,20 +20,26 @@
 <div id="root">
   <header class="top">
     <div class="brand">
-      <span class="brand-mark" role="img" aria-label="Волчонок Вулфи">🐺</span>
-      <div><strong>Wolfie <em>Kids</em></strong><small>Играй. Слушай. Говори!</small></div>
+      <span class="brand-mark" role="img" aria-label="Волчонок Вулфи"><img src="wolfie.svg" alt="" aria-hidden="true"></span>
+      <div><strong>Wolfie <em>Kids</em></strong><small>Мой сказочный английский</small></div>
     </div>
-    <div class="indicators"><span id="xp" title="Звёзды">⭐ 0</span><span id="daily" title="Цель дня">🎯 0/10</span></div>
+    <div class="indicators"><span id="xp" title="Мои звёздочки">⭐ 0</span></div>
+    <div class="header-actions">
+      <button type="button" id="theme-open" class="header-icon" title="Поменять цвета" aria-label="Поменять цвета оформления">🎨</button>
+      <button type="button" id="family-open" class="header-icon parent-icon" title="Для родителей" aria-label="Вход для родителей">⚙️</button>
+    </div>
+    <span id="daily" hidden aria-hidden="true">🎯 0/10</span>
   </header>
   <main id="view" aria-live="polite">
-    <section class="hero"><div class="hero-emoji">🐺</div><h1>Добро пожаловать!</h1><p>Загружаем твою карту приключений...</p></section>
+    <section class="hero"><h1>Привет!</h1><p>Открываем волшебный мир...</p></section>
   </main>
   <nav class="bottom" aria-label="Главное меню">
-    <button type="button" data-tab="home" class="selected"><span aria-hidden="true">🗺️</span>Уроки</button>
-    <button type="button" data-tab="play"><span aria-hidden="true">🎮</span>Играть</button>
-    <button type="button" data-tab="review"><span aria-hidden="true">🧠</span>Повторить</button>
-    <button type="button" data-tab="family"><span aria-hidden="true">👨‍👩‍👧</span>Родителям</button>
+    <button type="button" data-tab="home" class="selected"><span aria-hidden="true">🏠</span>Домик</button>
+    <button type="button" data-tab="play"><span aria-hidden="true">🎮</span>Игры</button>
+    <button type="button" data-tab="stories"><span aria-hidden="true">📚</span>Сказки</button>
+    <button type="button" data-tab="rewards"><span aria-hidden="true">🏅</span>Награды</button>
   </nav>
 </div>
+<div id="theme-overlay" class="theme-overlay" hidden></div>
 </body>
 </html>
