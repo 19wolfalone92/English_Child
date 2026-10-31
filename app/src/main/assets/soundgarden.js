@@ -78,7 +78,7 @@ function choose(button,target){
  });
  ctx.view.querySelector('#sound-feedback').innerHTML=`<div class="feedback ${good?'':'retry'}"><strong>${good?'🌟 Ура, Ева!':'🌱 Давай запомним!'}</strong>
  <p><b lang="en">${escapeHTML(target[0])}</b> — ${escapeHTML(target[1])}. ${good?'Ты нашла нужную картинку!':'Ничего страшного, слушай ещё раз!'}</p>
- <button type="button" class="secondary" id="sound-repeat">🔊 Послушать слово</button>
+ <button type="button" class="secondary" id="sound-repeat" ${ctx.speakAvailable()?'':'disabled'}>${ctx.speakAvailable()?'🔊 Послушать слово':'🔇 Голос недоступен'}</button>
  <button type="button" class="primary" id="sound-next">${s.index===s.queue.length-1?'Посмотреть результат':'Дальше →'}</button></div>`;
  bind('#sound-repeat',()=>ctx.speak(target[0]));
  bind('#sound-next',()=>{s.index++;question();});
