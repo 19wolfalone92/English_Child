@@ -172,3 +172,23 @@ p{font-size:15px;line-height:1.55}
 @media(min-width:580px){.quest-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr))}.route-track{grid-template-columns:repeat(6,minmax(0,1fr))}.garden-slots{gap:14px}.home-welcome img.wolfie-home{right:25px}}
 @media(max-width:360px){.top{padding-left:8px;padding-right:8px}.brand-mark{height:46px;width:46px}.brand small{font-size:9px}.indicators{display:none}.header-icon{width:42px}.home-welcome{height:232px;padding:20px 15px}.home-welcome img.wolfie-home{height:195px}.quick-card,.quest-shortcut{min-height:128px;padding:13px}.quick-card b,.quest-shortcut b{font-size:15px}.garden-slots{gap:6px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}.decor-sparkles{display:none}}
+
+/* 320–360 px compact phones: keep the first lesson's big CTA visible above the nav. */
+@media(max-width:360px){
+ .home-welcome{height:190px;min-height:190px;padding:16px 15px}
+ .home-welcome h1{font-size:26px;line-height:1.12;letter-spacing:-.5px;max-width:55%;margin:6px 0}
+ .home-welcome p{font-size:12px;max-width:55%;line-height:1.35}
+ .home-welcome .eyebrow{font-size:9px;letter-spacing:.4px}
+ .home-welcome img.wolfie-home{height:177px;max-width:49%;right:-12px}
+ .home-stats{gap:6px;margin:10px 0}
+ .home-stats>div{padding:9px 5px;border-radius:16px}
+ .home-stats strong{font-size:21px}
+ .home-stats span{font-size:11px}
+ .home-start{padding:14px 13px;margin-top:12px}
+ .home-start .section-lead h2{font-size:18px;margin:0}
+ .home-start .next{padding:10px;margin:9px 0}
+ .home-start .next strong{font-size:15px}
+ .home-start .next p{font-size:11px}
+ .home-start .primary{min-height:58px;font-size:17px}
+ .home-start .child-voice{margin-top:8px;font-size:12px;padding:8px}
+}
