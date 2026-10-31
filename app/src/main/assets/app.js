@@ -12,19 +12,51 @@ const lookup = new Map(modules.flatMap(m=>m.items.map(item=>[item.id,item])));
 const view = document.getElementById('view');
 const bridge = window.KidsAndroid || null;
 const fresh = () => ({done:{},items:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1',theme:'lilac'});
+const safeRecord=x=>x && typeof x==='object' && !Array.isArray(x) ? x : {};
+const boundedNumber=(x,max=100000000)=>{
+ const n=Number(x);
+ return Number.isFinite(n) && n>=0 ? Math.min(Math.floor(n),max) : 0;
+};
+const cleanScores=x=>Object.fromEntries(Object.entries(safeRecord(x))
+ .filter(([id,v])=>id.length<80 && v && typeof v==='object' && !Array.isArray(v))
+ .map(([id,v])=>[id,{best:boundedNumber(v.best,10),attempts:boundedNumber(v.attempts,100000)}]));
+function recoverData(x){
+ const r=fresh();
+ if(!x || typeof x!=='object' || Array.isArray(x))return r;
+ r.done=Object.fromEntries(Object.entries(safeRecord(x.done)).filter(([id,v])=>/^day-\\d{3}$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
+  .map(([id,v])=>[id,{passed:v.passed===true,best:boundedNumber(v.best,10),attempts:boundedNumber(v.attempts)}]));
+ r.items=Object.fromEntries(Object.entries(safeRecord(x.items)).filter(([id,v])=>/^kid-\\d{2}-\\d{2}$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
+  .map(([id,v])=>[id,{stage:boundedNumber(v.stage,5),seen:boundedNumber(v.seen),due:boundedNumber(v.due,9999999999999)}]));
+ r.days=Object.fromEntries(Object.entries(safeRecord(x.days)).filter(([k])=>/^\\d{4}-\\d{2}-\\d{2}$/.test(k))
+  .map(([k,v])=>[k,boundedNumber(v)]));
+ r.xp=boundedNumber(x.xp);r.answers=boundedNumber(x.answers);r.correct=Math.min(boundedNumber(x.correct),r.answers);
+ r.level=levels.includes(x.level)?x.level:r.level;
+ r.theme=typeof x.theme==='string'&&['lilac','strawberry','mint','sky','sunshine','rainbow','custom'].includes(x.theme)?x.theme:r.theme;
+ for(const key of ['customPrimary','customAccent']){
+  if(typeof x[key]==='string'&&/^#[0-9a-f]{6}$/i.test(x[key]))r[key]=x[key];
+ }
+ r.storyScores=cleanScores(x.storyScores);
+ r.dialogueScores=cleanScores(x.dialogueScores);
+ r.pictureWins=Object.fromEntries(Object.entries(safeRecord(x.pictureWins)).filter(([key])=>/^\\d{4}-\\d{2}-\\d{2}$/.test(key))
+  .map(([key,v])=>[key,boundedNumber(v,8)]));
+ r.gameWins=Object.fromEntries(Object.entries(safeRecord(x.gameWins)).filter(([key])=>key.length<60)
+  .map(([key,v])=>[key,boundedNumber(v)]));
+ r.alphabetHeard=Object.fromEntries(Object.entries(safeRecord(x.alphabetHeard)).filter(([key,v])=>/^[A-Z]$/.test(key)&&v===true));
+ r.garden=Array.isArray(x.garden)?x.garden.slice(0,8).map(v=>typeof v==='string'&&v.length<12?v:''):[];
+ r.chosenSticker=typeof x.chosenSticker==='string'&&x.chosenSticker.length<12?x.chosenSticker:null;
+ return r;
+}
 let state=fresh();
 try {
  const saved=bridge ? bridge.loadProgress() : localStorage.getItem('kids-progress-v1');
- if(saved) {
-   const x=JSON.parse(saved);
-   if(x && typeof x==='object' && !Array.isArray(x)) state={...fresh(),...x,done:x.done||{},items:x.items||{},days:x.days||{}};
- }
+ if(saved)state=recoverData(JSON.parse(saved));
 } catch(error) { console.warn('Progress could not be loaded',error); }
 const save=()=>{
  try {
   const data=JSON.stringify(state);
-  if(bridge) bridge.saveProgress(data);
-  else localStorage.setItem('kids-progress-v1',data);
+  if(bridge){
+   if(bridge.saveProgress(data)===false)console.error('Progress could not be committed');
+  }else localStorage.setItem('kids-progress-v1',data);
  } catch(error) { console.warn('Progress could not be saved',error); }
 };
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -263,7 +295,7 @@ function renderAlphabet(){
  view.innerHTML=html;
  view.querySelectorAll('[data-say]').forEach(btn=>btn.addEventListener('click',()=>{
   const row=alphabet.find(a=>a.letter===btn.dataset.say);
-  if(row){state.alphabetHeard??={};state.alphabetHeard[row.letter]=true;save();speak(`${row.letter}. ${row.word}`);}
+  if(row){if(speakAvailable()){state.alphabetHeard??={};state.alphabetHeard[row.letter]=true;save();}speak(`${row.letter}. ${row.word}`);}
  }));
  view.querySelector('#alphabet-back').addEventListener('click',renderPlay);
 }
@@ -349,8 +381,17 @@ function renderFamily(){
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Прогресс '+child('genitive'),'Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
+ `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();applyTheme();renderFamily();}});
+ view.querySelector('#export-progress')?.addEventListener('click',()=>{
+  if(bridge?.exportProgress)bridge.exportProgress();
+  else alert('Сохранение файла доступно в Android-версии.');
+ });
+ view.querySelector('#import-progress')?.addEventListener('click',()=>{
+  if(!confirm('Восстановить прогресс Евы из файла? Текущий прогресс на устройстве будет заменён.'))return;
+  if(bridge?.importProgress)bridge.importProgress();
+  else alert('Восстановление файла доступно в Android-версии.');
+ });
  view.querySelector('#family-back')?.addEventListener('click',renderHome);
 }
 function buildKinds(index,level){
@@ -489,7 +530,7 @@ function endSession(){
   state.done[s.lesson.id]={best:Math.max(old.best||0,correct),passed:passedToday||!!old.passed,attempts:(old.attempts||0)+1};
   save();
  }
- session=null;setNav(s.kind==='course'?'home':s.kind==='review'?'review':'play');
+ session=null;setNav(s.kind==='course'?'home':'play');
  const result=passedToday?'🏆':'🌈';
  view.innerHTML=topHero(result,passedToday?child('name')+', получилось!':child('name')+', каждая попытка важна!',`Верных ответов: ${correct} из ${s.items.length}.`)+
  `<section class="feature"><h2>${passedToday?'Звёздный результат '+esc(child('genitive'))+'!':'Можно попробовать ещё раз'}</h2><p>${s.kind==='course'?(passedToday?'Следующий урок открыт!':'Для открытия следующего урока нужно минимум 7 ответов из 10.'): 'Ты можешь повторить тему в любое время.'}</p><p>🎤 ${esc(s.module.mission)}</p><p class="muted">🌿 После одного занятия полезно сделать перерыв, потянуться и посмотреть вдаль.</p><p class="muted">Творческую устную и письменную работу программа не оценивает. Попроси взрослого послушать твой рассказ.</p><button class="primary" id="back-home">${s.kind==='course'?'Вернуться к курсу':'К тренировкам'}</button>${s.kind==='course'&&!passedToday?'<button class="secondary full" id="retry-day">↺ Повторить урок</button>':''}</section>`;
@@ -497,6 +538,21 @@ function endSession(){
  if(passedToday)sparkle();
  view.querySelector('#retry-day')?.addEventListener('click',()=>start(s.lesson.index));
 }
+/** Android Back: close the palette, leave an exercise or navigate toward the home screen. */
+window.KidsBack=()=>{
+ const overlay=document.getElementById('theme-overlay');
+ if(overlay&&!overlay.hidden){closeThemeChooser();return true;}
+ if(session){
+  const kind=session.kind;
+  session=null;
+  if(kind==='course')renderHome();
+  else renderPlay();
+  return true;
+ }
+ if(view.innerHTML.includes('class="hero home-welcome"'))return false;
+ renderHome();
+ return true;
+};
 document.getElementById('theme-open')?.addEventListener('click',renderThemeChooser);
 document.getElementById('family-open')?.addEventListener('click',renderParentGate);
 document.getElementById('theme-overlay')?.addEventListener('click',e=>{if(e.target?.id==='theme-overlay')closeThemeChooser();});
