@@ -108,6 +108,8 @@ view.querySelector('#quest-back').click();
 view.querySelector('#memory-play').click();
 assert.match(view.innerHTML,/Мастер памяти/);
 view.querySelector('#memory-back').click();
+buttons[0].click();
+assert.match(view.innerHTML,/Карта приключений/);
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
 assert.equal((view.innerHTML.match(/data-start="/g)||[]).length,300,'300 session buttons rendered');
 assert.match(view.innerHTML,/day-num/);
