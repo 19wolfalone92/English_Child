@@ -203,7 +203,7 @@ function renderHome(){
  const startAt=Math.max(0,Math.min(current-2,lessons.length-6));
  let html=`<section class="hero home-welcome"><div class="welcome-copy"><div class="eyebrow">✨ ПРИКЛЮЧЕНИЯ С ВУЛФИ</div><h1>Привет,<br>солнышко!</h1><p>Пойдём играть и открывать английский?</p></div><img class="wolfie-home" src="wolfie.svg" alt="Вулфи — добрый волчонок с бантиком"><span class="welcome-sparkle one">✨</span><span class="welcome-sparkle two">✦</span></section>`;
  html+=`<section class="home-stats"><div><strong>⭐ ${state.xp||0}</strong><span>звёздочки</span></div><div><strong>🌸 ${doneCount}</strong><span>уроков</span></div><div><strong>🏅 ${awards.filter(a=>a.earned).length}</strong><span>наклейки</span></div></section>`;
- html+=`<section class="feature home-start"><div class="section-lead"><h2>🌷 Твой следующий шаг</h2><span class="badge">${next?esc(modules[next.moduleIndex].level):'Ура! 🎉'}</span></div>`;
+ html+=`<section class="feature home-start"><div class="section-lead"><h2>🌷 Твой следующий шаг</h2><span class="badge">${next?esc(levelNames[modules[next.moduleIndex].level]):'Ура! 🎉'}</span></div>`;
  if(next){
   const m=modules[next.moduleIndex];
   html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">▶ Играть и учиться</button>`;
