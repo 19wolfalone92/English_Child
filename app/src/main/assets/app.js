@@ -148,14 +148,21 @@ function renderAlphabet(){
 }
 function renderPlay(){
  session=null;setNav('play');
- let html=topHero('🎮','Играй и учись','Выбери любую тему. Свободная тренировка не влияет на порядок уроков курса.');
- html+='<section class="feature alphabet-banner"><div><h2>🔤 Буквы A–Z</h2><p>26 букв, слова и произношение.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
- html+='<div class="feature"><h2>Выбери уровень</h2><div class="level-buttons">'+levels.map(level=>`<button class="level-button ${state.level===level?'active':''}" data-level="${level}">${level}</button>`).join('')+'</div></div>';
- html+='<section class="feature"><h2>🌟 Выбери приключение</h2><div class="quest-shortcuts"><button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читай по смыслу</small></button><button class="quest-shortcut" id="dialogues-play"><span>🗣️</span><b>Диалоги</b><small>Учись общаться</small></button><button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Без таймера</small></button><button class="quest-shortcut" id="pictures-play"><span>🖼️</span><b>Картинки</b><small>Для малышей</small></button></div></section>';
- html+='<section class="feature"><h2>Игры и тренировки</h2><div class="play-grid">';
+ let html=topHero('🎲','Играй и учись','Какую игру выберем? Просто нажми на большую картинку!');
+ html+='<section class="feature"><div class="section-lead"><h2>🎮 Выбери игру</h2><span class="badge">4 игры</span></div><div class="quest-shortcuts">'+
+ '<button class="quest-shortcut" id="pictures-play"><span>🖼️</span><b>Угадай картинку</b><small>Для самых маленьких</small></button>'+
+ '<button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Играй со словами</small></button>'+
+ '<button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читаем вместе</small></button>'+
+ '<button class="quest-shortcut" id="dialogues-play"><span>🗣️</span><b>Поболтаем</b><small>Выбирай ответ</small></button></div></section>';
+ html+='<section class="feature alphabet-banner"><div><h2>🔤 Волшебные буквы</h2><p>A, B, C… Каждую можно послушать!</p></div><button type="button" class="secondary" id="alphabet">🔊 Азбука →</button></section>';
+ html+='<section class="feature"><div class="section-lead"><h2>🌼 Повторим?</h2><span class="badge">Для памяти</span></div><p>Знакомые слова возвращаются, чтобы ты их не забыла.</p><button type="button" class="secondary full" id="review-play">🧠 Повторять слова</button></section>';
+ html+='<section class="feature"><h2>🧚 Выбери свой мир</h2><p>Начни с первых слов. Другие ступени подрастут вместе с тобой!</p><div class="level-buttons">';
+ html+=levels.map(l=>`<button class="level-button ${state.level===l?'active':''}" data-level="${l}">${esc(l)}<br><small>${esc(levelNames[l])}</small></button>`).join('');
+ html+='</div></section>';
+ html+='<section class="feature"><h2>🐾 Мои темы</h2><div class="play-grid">';
  for(const [i,m] of modules.entries()){
   if(m.level!==state.level)continue;
-  html+=`<button class="play-card" data-free="${i}"><span class="big-emoji">${m.emoji}</span><strong>${esc(m.title)}</strong><small>10 заданий · 🔊 слушать · 🧩 собирать</small></button>`;
+  html+=`<button class="play-card" data-free="${i}"><span class="big-emoji">${m.emoji}</span><strong>${esc(m.title)}</strong><small>Играй со словами</small></button>`;
  }
  html+='</div></section>';
  view.innerHTML=html;
@@ -164,8 +171,44 @@ function renderPlay(){
  view.querySelector('#dialogues-play')?.addEventListener('click',()=>launchExtra('openDialogues'));
  view.querySelector('#memory-play')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelector('#pictures-play')?.addEventListener('click',()=>launchExtra('openPictures'));
+ view.querySelector('#review-play')?.addEventListener('click',renderReview);
  view.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{state.level=b.dataset.level;save();renderPlay();}));
  view.querySelectorAll('[data-free]').forEach(b=>b.addEventListener('click',()=>startFree(Number(b.dataset.free))));
+}
+function renderRewards(){
+ session=null;setNav('rewards');
+ const awards=achievements(),earned=awards.filter(a=>a.earned),picked=state.chosenSticker;
+ const allowed=new Set(earned.map(a=>a.emoji));
+ if(!allowed.has(picked))state.chosenSticker=earned[0]?.emoji||null;
+ const garden=Array.isArray(state.garden)?state.garden.slice(0,8):[];
+ let html=topHero('🎁','Мой волшебный сад','Собирай добрые награды и укрась свою волшебную полянку!');
+ html+=`<section class="feature"><div class="section-lead"><h2>🌼 Волшебная полянка</h2><span class="badge">${earned.length}/8 наклеек</span></div><p>${earned.length?'Выбери цветную наклейку, а потом нажми на место в саду.':'Сначала поиграй и узнай новые слова — появятся первые наклейки!'}</p><div class="garden"><div class="garden-hill"></div><div class="garden-slots">`;
+ for(let i=0;i<8;i++){
+  const emoji=allowed.has(garden[i])?garden[i]:'';
+  html+=`<button type="button" class="garden-slot ${emoji?'full':''}" data-garden-slot="${i}" aria-label="Место ${i+1}: ${emoji?'украшено '+emoji:'пустое'}">${emoji||'✧'}</button>`;
+ }
+ html+='</div></div></section>';
+ html+='<section class="feature"><h2>🌟 Альбом наклеек</h2><p>Цветные наклейки уже твои. Остальные откроются, когда будешь играть и учиться.</p><div class="achievement-grid">';
+ for(const award of awards){
+  html+=`<button type="button" class="achievement sticker-card ${award.earned?'earned':''} ${state.chosenSticker===award.emoji&&award.earned?'sticker-selected':''}" data-sticker="${esc(award.emoji)}" ${award.earned?'':'disabled'} aria-label="${award.earned?'Выбрать наклейку':'Награда пока закрыта'}: ${esc(award.name)}"><span>${award.earned?award.emoji:'🔒'}</span><b>${esc(award.name)}</b><small>${esc(award.detail)}</small></button>`;
+ }
+ html+='</div><p id="sticker-feedback" class="muted" role="status">🏅 Наклейки не пропадут, даже если долго не играть.</p></section>';
+ view.innerHTML=html;
+ view.querySelectorAll('[data-sticker]').forEach(b=>b.addEventListener('click',()=>{
+  if(!allowed.has(b.dataset.sticker))return;
+  state.chosenSticker=b.dataset.sticker;save();renderRewards();
+ }));
+ view.querySelectorAll('[data-garden-slot]').forEach(b=>b.addEventListener('click',()=>{
+  if(!state.chosenSticker||!allowed.has(state.chosenSticker)){
+   const note=view.querySelector('#sticker-feedback');
+   if(note)note.textContent='Сначала открой свою первую наклейку! 🌷';
+   return;
+  }
+  const i=Number(b.dataset.gardenSlot);
+  state.garden=Array.isArray(state.garden)?state.garden:[];
+  state.garden[i]=state.chosenSticker;
+  save();renderRewards();
+ }));
 }
 function renderReview(){
  session=null;setNav('review');
