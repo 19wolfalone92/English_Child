@@ -69,6 +69,15 @@ assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
 assert.match(read('app.js'),/localStorage/);
+const java=fs.readFileSync(new URL('../app/src/main/java/com/wolfie/kids/MainActivity.java',import.meta.url),'utf8');
+const manifest=fs.readFileSync(new URL('../app/src/main/AndroidManifest.xml',import.meta.url),'utf8');
+assert.match(java,/ACTION_CREATE_DOCUMENT/,'backup export via Android document picker');
+assert.match(java,/ACTION_OPEN_DOCUMENT/,'backup import via Android document picker');
+assert.match(java,/\.commit\(\)/,'progress saved synchronously');
+assert.match(java,/onBackPressed/,'Android Back override exists');
+assert.match(java,/WebChromeClient/,'confirm dialogs supported');
+assert.match(manifest,/allowBackup="false"/,'Android system backup not used without user choice');
+assert.doesNotMatch(manifest,/android\.permission\.INTERNET/,'children app requires no Internet permission');
 
 function fakeElement(dataset={}){
  return {dataset,disabled:false,textContent:'',_html:'',events:{},classList:{toggle(){},add(){}},
@@ -157,6 +166,8 @@ assert.ok(gate,'adult multiplication? addition challenge present');
 view.querySelector('#parent-answer').value=String(Number(gate[1])+Number(gate[2]));
 view.querySelector('#parent-check').click();
 assert.match(view.innerHTML,/id="reset-progress"/);
+assert.match(view.innerHTML,/id="export-progress"/);
+assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
 view.querySelector('#family-back').click();
 assert.match(view.innerHTML,/Следующий шаг Евы/);
@@ -252,7 +263,7 @@ for(let n=0;n<8;n++){
  const good=view.querySelectorAll('[data-picture]').find(b=>b.dataset.picture===en);
  assert.ok(good,'matching picture exists');
  good.click();
- assert.match(view.querySelector('#picture-feedback').innerHTML,/Ты нашёл/);
+ assert.match(view.querySelector('#picture-feedback').innerHTML,/Ты нашла/);
  view.querySelector('#picture-next').click();
 }
 assert.match(view.innerHTML,/Ева, ты художница-исследователь/);
@@ -273,4 +284,111 @@ firstSticker.click();
 view.querySelectorAll('[data-garden-slot]')[0].click();
 assert.equal(JSON.parse(storage).garden[0],'👣','chosen sticker saved into first garden slot');
 assert.equal(JSON.parse(storage).theme,'custom','theme remains after session changes');
-console.log('PASS: 300 lessons, 15 stories/45 Q, 10 dialogues/30 replies, full story + dialogue + picture flows and memory cards');
+// Verify native Back integration from an active modal and a child route.
+get('theme-open').click();
+assert.equal(get('theme-overlay').hidden,false);
+assert.equal(window.KidsBack(),true);
+assert.equal(get('theme-overlay').hidden,true);
+assert.equal(window.KidsBack(),true);
+assert.match(view.innerHTML,/Привет,<br>Ева!/);
+assert.equal(window.KidsBack(),false,'back at home should return control to Android');
+
+// Resume from saved progress without discarding valid achievements or selected colors.
+const preserved=storage;
+vm.runInNewContext(read('app.js'),{
+ window,document:doc,localStorage,console,Date,Math,
+ setTimeout(){return 0;},confirm(){return true;},alert(){},
+ SpeechSynthesisUtterance:function(){}
+},{filename:'reload-app.js'});
+assert.match(view.innerHTML,/1\/300/,'a successful lesson survives a WebView reload');
+assert.equal(root.dataset.theme,'custom','custom palette survives restart');
+assert.equal(JSON.parse(storage).garden[0],'👣','sticker placement survives restart');
+
+// Fail gracefully on partially corrupted progress, avoiding crashes and HTML injection.
+storage=JSON.stringify({done:[],items:null,days:"broken",level:"invalid",theme:"<img src=x>",
+ xp:"<script>alert(1)</script>",storyScores:{"story-01":null},alphabetHeard:42,
+ garden:[{"bad":"value"}],pictureWins:{"2026-10-31":null}});
+vm.runInNewContext(read('app.js'),{
+ window,document:doc,localStorage,console,Date,Math,
+ setTimeout(){return 0;},confirm(){return true;},alert(){},
+ SpeechSynthesisUtterance:function(){}
+},{filename:'corrupt-progress-app.js'});
+assert.match(view.innerHTML,/Привет,<br>Ева!/);
+assert.equal(root.dataset.theme,'lilac','invalid theme falls back safely');
+assert.doesNotMatch(view.innerHTML,/<script>alert\(1\)<\/script>/);
+assert.match(view.innerHTML,/0\/300/);
+buttons[3].click();
+assert.match(view.innerHTML,/Волшебный сад Евы/);
+
+// Play all 300 sequential lessons using the DOM harness: MCQ, reorder, text entry and offline listening fallback.
+storage=null;
+vm.runInNewContext(read('app.js'),{
+ window,document:doc,localStorage,console,Date,Math,
+ setTimeout(){return 0;},confirm(){return true;},alert(){},
+ SpeechSynthesisUtterance:function(){}
+},{filename:'complete-curriculum.js'});
+// A lesson interrupted by phone rotation or Android Back resumes at the next unanswered question.
+view.querySelector('#continue').click();
+for(let q=0;q<2;q++){
+ const item=modules[0].items[q+1];
+ const correct=view.options.find(b=>b.dataset.answer===item.id);
+ assert.ok(correct,'first checkpoint question exists');
+ correct.click();
+ view.querySelector('#feedback').querySelector('#next-question').click();
+}
+assert.equal(JSON.parse(storage).activeCourse.index,2);
+assert.equal(JSON.parse(storage).activeCourse.correct,2);
+view.querySelector('#leave').click();
+assert.match(view.innerHTML,/Продолжить занятие/);
+vm.runInNewContext(read('app.js'),{
+ window,document:doc,localStorage,console,Date,Math,
+ setTimeout(){return 0;},confirm(){return true;},alert(){},
+ SpeechSynthesisUtterance:function(){}
+},{filename:'resume-checkpoint.js'});
+assert.match(view.innerHTML,/Продолжить занятие/,'Android rotation or restart keeps pending lesson');
+view.querySelector('#continue').click();
+for(let q=2;q<10;q++){
+ const item=modules[0].items[(q+1)%10];
+ const correct=view.options.find(b=>b.dataset.answer===item.id);
+ assert.ok(correct,'remaining checkpoint answer '+q);
+ correct.click();
+ view.querySelector('#feedback').querySelector('#next-question').click();
+}
+assert.match(view.innerHTML,/Следующий урок открыт/);
+view.querySelector('#back-home').click();
+assert.equal(JSON.parse(storage).done['day-001'].passed,true);
+assert.ok(!JSON.parse(storage).activeCourse,'checkpoint cleaned after completion');
+assert.equal(JSON.parse(storage).answers,10,'no duplicate answers after resuming');
+
+for(let dayIndex=1;dayIndex<300;dayIndex++){
+ assert.ok(view.innerHTML.includes('id="continue"'),'next lesson reachable: '+dayIndex);
+ view.querySelector('#continue').click();
+ const module=modules[Math.floor(dayIndex/10)];
+ for(let q=0;q<10;q++){
+  const item=module.items[((dayIndex%10)+1+q)%10];
+  if(view.innerHTML.includes('id="check-words"')){
+   const tokens=view.querySelectorAll('[data-token]').slice().sort((a,b)=>Number(a.dataset.token)-Number(b.dataset.token));
+   assert.equal(tokens.length,item.en.split(/\s+/).length,'all word tokens offered');
+   for(const token of tokens)token.click();
+   view.querySelector('#check-words').click();
+  }else if(view.innerHTML.includes('id="check-type"')){
+   view.querySelector('#type-answer').value=item.en;
+   view.querySelector('#check-type').click();
+  }else{
+   const btn=view.options.find(b=>b.dataset.answer===item.id);
+   assert.ok(btn,'correct option exists day '+dayIndex+' question '+q);
+   btn.click();
+  }
+  assert.match(view.querySelector('#feedback').innerHTML,/Верно!/,'correct feedback day '+dayIndex+' question '+q);
+  view.querySelector('#feedback').querySelector('#next-question').click();
+ }
+ assert.match(view.innerHTML,/Следующий урок открыт/,'lesson '+(dayIndex+1)+' passed');
+ view.querySelector('#back-home').click();
+}
+assert.match(view.innerHTML,/300\/300/,'all 300 lessons complete');
+const full=JSON.parse(storage);
+assert.equal(Object.keys(full.done).length,300);
+assert.ok(Object.values(full.done).every(v=>v.passed),'no hidden locked lessons');
+assert.equal(full.answers,3000);
+assert.equal(full.correct,3000);
+console.log('PASS: 300/300 lessons completed, checkpoint recovery, backup UI, safe corruption recovery, Android Back and full child activity suite.');

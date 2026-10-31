@@ -1,7 +1,7 @@
 name: Eva English Kids Android APK
 on:
   push:
-    branches: [main, 'feature/**']
+    branches: [main, 'feature/**', 'fix/**']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -31,9 +31,15 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Assemble installable debug APK
-        run: gradle --no-daemon :app:assembleDebug
+        run: gradle --no-daemon :app:lintDebug :app:assembleDebug
+      - name: Verify APK archive and Android signature
+        run: |
+          unzip -tq app/build/outputs/apk/debug/app-debug.apk
+          SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          test -n "$SIGNER"
+          "$SIGNER" verify --verbose app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Eva-English-Kids-v0.4.0-debug
+          name: Eva-English-Kids-v0.4.1-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
