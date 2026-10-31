@@ -1,5 +1,7 @@
 (function kidsAdventures(){
 'use strict';
+const childName=()=>ctx?.identity?.name||window.KIDS_IDENTITY?.name||'Ева';
+const childGenitive=()=>ctx?.identity?.genitive||window.KIDS_IDENTITY?.genitive||'Евы';
 const stories=Array.isArray(window.KIDS_STORIES)?window.KIDS_STORIES:[];
 const dialogues=Array.isArray(window.KIDS_DIALOGUES)?window.KIDS_DIALOGUES:[];
 const vocab={
@@ -32,7 +34,7 @@ function openStories(api){
  ctx=api;current=null;
  const level=api.state.level||'Pre-A1';
  const list=stories.filter(x=>x.level===level);
- let html=title('📚','Сказки и тайны','Настоящие короткие истории на английском. Читай, слушай и отвечай по смыслу!');
+ let html=title('📚','Сказки для '+childGenitive(),'Ева, послушай интересную историю, а потом ответь на вопросы!');
  html+=`<section class="feature"><h2>Выбери ступень</h2>${levelRow('story')}<div class="quest-grid">`;
  for(const story of list){
   const best=api.state.storyScores?.[story.id]?.best||0;
@@ -80,7 +82,7 @@ function storyEnd(){
  ctx.state.storyScores[s.story.id]={best:Math.max(prev,score),attempts:(ctx.state.storyScores[s.story.id]?.attempts||0)+1};
  if(score>=2&&prev<2)ctx.state.xp=(ctx.state.xp||0)+15;
  ctx.save();current=null;
- ctx.view.innerHTML=title(score>=2?'🏆':'🌈',score>=2?'История разгадана!':'Ты стал внимательнее!',`Правильных ответов: ${score} из 3.`)+
+ ctx.view.innerHTML=title(score>=2?'🏆':'🌈',score>=2?childName()+', история разгадана!':childName()+', ты стала внимательнее!',`Правильных ответов: ${score} из 3.`)+
  `<section class="feature"><p>${score>=2?'⭐ История отмечена как прочитанная.':'Ты можешь прочитать рассказ снова и попробовать ещё раз.'}</p><p>Что бы ты сделал на месте героя? Расскажи взрослому одним-двумя английскими предложениями.</p><button class="primary" id="quest-list">К другим историям →</button><button class="secondary full" id="quest-reread">📖 Прочитать ещё раз</button></section>`;
  back('#quest-list',()=>openStories(ctx));back('#quest-reread',()=>readStory(s.story.id));
 }
@@ -88,7 +90,7 @@ function openDialogues(api){
  ctx=api;current=null;
  const level=api.state.level||'Pre-A1';
  const list=dialogues.filter(x=>x.level===level);
- let html=title('🗣️','Говорим с героями','Помоги герою подобрать естественный ответ. Вслух повторяй выбранную фразу!');
+ let html=title('🗣️','Ева разговаривает с героями','Помоги герою подобрать ответ и повтори его вслух!');
  html+=`<section class="feature"><h2>Выбери ступень</h2>${levelRow('dialogue')}<div class="quest-grid">`;
  for(const d of list){
   const best=api.state.dialogueScores?.[d.id]?.best||0;
@@ -133,13 +135,13 @@ function dialogueEnd(){
  ctx.state.dialogueScores[s.dialogue.id]={best:Math.max(old,s.points)};
  if(s.points>=2&&old<2)ctx.state.xp=(ctx.state.xp||0)+15;
  ctx.save();current=null;
- ctx.view.innerHTML=title('🗣️','Разговор завершён!',`Удачных ответов ${s.points} из 3.`)+
+ ctx.view.innerHTML=title('🗣️',childName()+', разговор завершён!',`Удачных ответов ${s.points} из 3.`)+
  `<section class="feature"><p>Попробуй повторить весь разговор вслух. Это тренировка понимания и выбора реплик, а не проверка твоего произношения.</p><button id="dialogue-list" class="primary">Другие разговоры</button><button id="dialogue-retry" class="secondary full">Повторить</button></section>`;
  back('#dialogue-list',()=>openDialogues(ctx));back('#dialogue-retry',()=>startDialogue(s.dialogue.id));
 }
 function openMemory(api){
  ctx=api;current=null;cardGame=null;
- let html=title('🧠','Мастер памяти','Найди пары: английское слово и его перевод. Ошибаться можно — мы учимся!');
+ let html=title('🧠','Ева — мастер памяти!','Найди пары: английское слово и его перевод. Ошибаться можно — мы учимся!');
  html+=`<section class="feature"><h2>Уровень слов</h2>${levelRow('memory')}<p>Пять пар · без таймера · без проигрыша · слушай правильные слова.</p><button class="primary" id="begin-memory">🎴 Играть в пары</button><button class="secondary full" id="memory-back">← К играм</button></section>`;
  ctx.view.innerHTML=html;bindLevel('memory');
  back('#begin-memory',startMemory);back('#memory-back',api.onExit);
@@ -181,7 +183,7 @@ function finishMemory(){
  ctx.state.gameWins[key]=(ctx.state.gameWins[key]||0)+1;
  if(first)ctx.state.xp=(ctx.state.xp||0)+10;
  ctx.save();cardGame=null;
- ctx.view.innerHTML=title('🎴','Все пары найдены!',`Ты нашёл 5 пар за ${g.moves} попыток.`)+
+ ctx.view.innerHTML=title('🎴',childName()+', все пары найдены!',`Ты нашла 5 пар за ${g.moves} попыток.`)+
  `<section class="feature"><p>${first?'⭐ +10 звёзд за первую игру сегодня!':'Повторение укрепляет память. Ты можешь играть ещё.'}</p><p>Молодец! Попробуй назвать слова без подсказки.</p><button class="primary" id="memory-again">🔁 Ещё раз</button><button class="secondary full" id="memory-home">К играм</button></section>`;
  back('#memory-again',startMemory);back('#memory-home',()=>openMemory(ctx));
 }
@@ -198,7 +200,7 @@ const pictures=[
 {en:'shoe',ru:'туфля',emoji:'👞'}];
 function openPictures(api){
  ctx=api;current=null;
- ctx.view.innerHTML=title('🖼️','Угадай картинку','Слушай или прочитай слово на английском и найди подходящую картинку.')+
+ ctx.view.innerHTML=title('🖼️','Ева, угадай картинку!','Послушай слово на английском и найди подходящую картинку.')+
  `<section class="feature"><h2>24 знакомых предмета</h2><p>Восемь заданий за игру, без таймера и наказаний за ошибки. Для начинающих Pre-A1/A1.</p><button class="primary" id="pictures-start">🎨 Играть с картинками</button><button class="secondary full" id="pictures-exit">← К играм</button></section>`;
  back('#pictures-start',startPictures);back('#pictures-exit',ctx.onExit);
 }
@@ -237,7 +239,7 @@ function picturesEnd(){
  ctx.state.pictureWins[key]=Math.max(s.correct,previous);
  if(s.correct>=6&&previous<6)ctx.state.xp=(ctx.state.xp||0)+10;
  ctx.save();current=null;
- ctx.view.innerHTML=title(s.correct>=6?'🎖️':'🌻',s.correct>=6?'Художник-исследователь!':'Становишься внимательнее!',`Ты нашёл ${s.correct} из 8 картинок.`)+
+ ctx.view.innerHTML=title(s.correct>=6?'🎖️':'🌻',s.correct>=6?childName()+', ты художница-исследователь!':childName()+', становишься внимательнее!',`Ты нашла ${s.correct} из 8 картинок.`)+
  `<section class="feature"><p>Повторяй слово вслух, показывая предмет в комнате или на рисунке. Найти все картинки с первого раза необязательно!</p><button class="primary" id="pictures-again">🔁 Ещё картинки</button><button class="secondary full" id="pictures-done">К играм</button></section>`;
  back('#pictures-again',startPictures);back('#pictures-done',()=>openPictures(ctx));
 }
