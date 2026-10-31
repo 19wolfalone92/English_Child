@@ -103,11 +103,11 @@ function renderAlphabet(){
  const alphabet=Array.isArray(window.KIDS_ALPHABET)?window.KIDS_ALPHABET:[];
  let html=topHero('🔤','Моя английская азбука','Все 26 букв! Нажми на карточку, чтобы услышать букву и слово. Повторяй вслух с волчонком.');
  html+=`<section class="feature"><div class="section-title"><h2>Слушай и повторяй</h2><span class="badge">A–Z · ${alphabet.length}</span></div>
- <div class="alphabet-grid">${alphabet.map(row=>`<button type="button" class="alphabet-card" data-say="${esc(row.letter)}" aria-label="Послушать ${esc(row.letter)} — ${esc(row.word)}"><strong>${esc(row.letter)}</strong><b>${esc(row.word)}</b><small>${esc(row.ru)}</small><span>🔊</span></button>`).join('')}</div><p class="muted">Название буквы и звук в слове могут различаться. Слушай слово целиком. Для озвучивания нужен английский голос в Android.</p><button class="secondary full" id="alphabet-back">← К тренировкам</button></section>`;
+ <div class="alphabet-grid">${alphabet.map(row=>`<button type="button" class="alphabet-card" data-say="${esc(row.letter)}" aria-label="Послушать ${esc(row.letter)} — ${esc(row.word)}"><span class="letter-picture" aria-hidden="true">${esc(row.emoji||"🔤")}</span><strong>${esc(row.letter)}</strong><b>${esc(row.word)}</b><small>${esc(row.ru)}</small><span>🔊</span></button>`).join('')}</div><p class="muted">Название буквы и звук в слове могут различаться. Слушай слово целиком. Для озвучивания нужен английский голос в Android.</p><button class="secondary full" id="alphabet-back">← К тренировкам</button></section>`;
  view.innerHTML=html;
  view.querySelectorAll('[data-say]').forEach(btn=>btn.addEventListener('click',()=>{
   const row=alphabet.find(a=>a.letter===btn.dataset.say);
-  if(row)speak(`${row.letter}. ${row.word}`);
+  if(row){state.alphabetHeard??={};state.alphabetHeard[row.letter]=true;save();speak(`${row.letter}. ${row.word}`);}
  }));
  view.querySelector('#alphabet-back').addEventListener('click',renderPlay);
 }
