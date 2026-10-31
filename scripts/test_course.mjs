@@ -99,6 +99,7 @@ vm.runInNewContext(read('app.js'),{
 assert.match(view.innerHTML,/Привет, исследователь/);
 assert.match(view.innerHTML,/Карта приключений/);
 assert.match(view.innerHTML,/Приключения Волчонка/);
+assert.match(view.innerHTML,/Картинки/);
 view.querySelector('#stories-home').click();
 assert.match(view.innerHTML,/Сказки и тайны/);
 view.querySelector('#quest-back').click();
@@ -108,6 +109,9 @@ view.querySelector('#quest-back').click();
 view.querySelector('#memory-play').click();
 assert.match(view.innerHTML,/Мастер памяти/);
 view.querySelector('#memory-back').click();
+view.querySelector('#pictures-play').click();
+assert.match(view.innerHTML,/Угадай картинку/);
+view.querySelector('#pictures-exit').click();
 buttons[0].click();
 assert.match(view.innerHTML,/Карта приключений/);
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
