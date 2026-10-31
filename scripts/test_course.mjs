@@ -76,7 +76,7 @@ function fakeElement(dataset={}){
    return this.nodes.get(sel);
   },
   querySelectorAll(sel){
-    if(!/^\\[data-/.test(sel))return [];
+    if(!/^\[data-/.test(sel))return [];
     this.selectors??=new Map();
     if(!this.selectors.has(sel)){
       const key=sel.slice(6,-1),camel=key.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
