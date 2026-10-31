@@ -16,6 +16,18 @@ assert.equal(window.KIDS_ALPHABET.map(x=>x.letter).join(''),'ABCDEFGHIJKLMNOPQRS
 vm.runInNewContext(read('stories.js'),{window},{filename:'stories.js'});
 vm.runInNewContext(read('dialogues.js'),{window},{filename:'dialogues.js'});
 vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{filename:'adventures.js'});
+vm.runInNewContext(read('soundgarden.js'),{window,Date,Math},{filename:'soundgarden.js'});
+assert.equal(window.KIDS_SOUND_GARDEN.worlds.length,8,'8 fairy listening worlds');
+assert.equal(window.KIDS_SOUND_GARDEN.worlds.reduce((sum,w)=>sum+w.words.length,0),48,'48 original picture-word matches');
+for(const world of window.KIDS_SOUND_GARDEN.worlds){
+ assert.equal(world.words.length,6,'6 different cards for '+world.id);
+ assert.equal(new Set(world.words.map(w=>w[0])).size,6,'no repeated targets '+world.id);
+ for(const [en,ru,emoji] of world.words){
+  assert.ok(/^[a-z ]+$/.test(en),'English sound target '+en);
+  assert.ok(/[а-яё]/i.test(ru),'Russian label '+ru);
+  assert.ok(emoji.length>0,'picture available');
+ }
+}
 assert.equal(window.KIDS_STORIES.length,15,'15 authored original readers');
 assert.equal(window.KIDS_DIALOGUES.length,10,'10 scripted speaking tasks');
 for(const level of ['Pre-A1','A1','A2','B1','B2']){
@@ -64,7 +76,7 @@ assert.ok(read('index.html').indexOf('identity.js')<read('index.html').indexOf('
 assert.match(read('index.html'),/brand-title/);
 assert.match(read('index.html'),/app.js/);
 assert.match(read('index.html'),/phonics.js/);
-for(const file of ['stories.js','dialogues.js','adventures.js','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
+for(const file of ['stories.js','dialogues.js','adventures.js','soundgarden.js','magic-world.css','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
 assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote resources');
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
@@ -169,9 +181,30 @@ assert.match(view.innerHTML,/id="reset-progress"/);
 assert.match(view.innerHTML,/id="export-progress"/);
 assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
+assert.match(view.innerHTML,/id="toggle-advanced"/);
+assert.equal(JSON.parse(storage).advancedContent,false,'gentle mode is the default');
+view.querySelector('#toggle-advanced').click();
+assert.equal(JSON.parse(storage).advancedContent,true,'parent can enable advanced play');
 view.querySelector('#family-back').click();
+buttons[1].click();
+assert.match(view.innerHTML,/data-level="B2"/,'advanced levels shown only after adult opt-in');
+get('family-open').click();
+const again=view.innerHTML.match(/Сколько будет (\d+) \+ (\d+)\?/);
+view.querySelector('#parent-answer').value=String(Number(again[1])+Number(again[2]));
+view.querySelector('#parent-check').click();
+view.querySelector('#toggle-advanced').click();
+assert.equal(JSON.parse(storage).advancedContent,false,'adult can return to gentle mode');
+view.querySelector('#family-back').click();
+buttons[1].click();
+assert.doesNotMatch(view.innerHTML,/data-level="B2"/,'B2 hidden by default in child free play');
+view.querySelector('#stories-play').click();
+assert.doesNotMatch(view.innerHTML,/data-quest-level="B2"/,'B2 hidden in stories');
+buttons[0].click();
+assert.match(view.innerHTML,/Привет,<br>Ева!/);
 assert.match(view.innerHTML,/Следующий шаг Евы/);
 assert.match(view.innerHTML,/Карта Евы/);
+assert.match(view.innerHTML,/Волшебный мир Евы/);
+assert.match(view.innerHTML,/world-sound/);
 assert.match(view.innerHTML,/Ева и Вулфи/);
 assert.match(view.innerHTML,/Картинки/);
 view.querySelector('#stories-home').click();
@@ -194,6 +227,8 @@ assert.match(view.innerHTML,/day-num/);
 assert.match(view.innerHTML,/data-hop="0"/,'current steps must be visible');
 assert.match(read('index.html'),/storybook.css/);
 assert.match(read('index.html'),/wolfie.svg/);
+assert.match(read('magic-world.css'),/eva-valley\.svg/,'scene bundled in CSS');
+assert.match(read('app.js'),/world-sound/,'scene hotspots wired');
 assert.match(read('index.html'),/data-tab="rewards"/);
 
 // End-to-end DOM-light UI smoke: first lesson, 10 correct choices, completion unlocks next day.
@@ -268,9 +303,29 @@ for(let n=0;n<8;n++){
 }
 assert.match(view.innerHTML,/Ева, ты художница-исследователь/);
 assert.equal(JSON.parse(storage).xp,140);
-// Memory game presents ten cards; child can leave without a penalty.
+// Complete an entire sound-garden round without an English TTS engine; test its accessible fallback.
 view.querySelector('#pictures-done').click();
 view.querySelector('#pictures-exit').click();
+view.querySelector('#sound-play-game').click();
+assert.match(view.innerHTML,/Звуковой лес Евы/);
+assert.equal(view.querySelectorAll('[data-sound-world]').length,8);
+view.querySelectorAll('[data-sound-world]')[0].click();
+for(let n=0;n<6;n++){
+ const target=view.innerHTML.match(/class="sound-fallback"><b lang="en">([^<]+)</)?.[1];
+ assert.ok(target,'visible alternative for no TTS');
+ const correct=view.querySelectorAll('[data-sound-answer]').find(b=>b.dataset.soundAnswer===target);
+ assert.ok(correct,'matching picture accessible '+target);
+ correct.click();
+ assert.match(view.querySelector('#sound-feedback').innerHTML,/Ура, Ева!/);
+ view.querySelector('#sound-next').click();
+}
+assert.match(view.innerHTML,/Полянка расцвела, Ева!/);
+assert.equal(JSON.parse(storage).soundScores.pets.best,6);
+assert.equal(JSON.parse(storage).xp,152,'a one-time listening reward earned');
+view.querySelector('#sound-all').click();
+assert.match(view.innerHTML,/Собрано!/);
+view.querySelector('#sound-exit').click();
+// Memory game presents ten cards; child can leave without a penalty.
 view.querySelector('#memory-play').click();
 view.querySelector('#begin-memory').click();
 assert.equal(view.querySelectorAll('[data-memory-card]').length,10);
@@ -284,6 +339,7 @@ firstSticker.click();
 view.querySelectorAll('[data-garden-slot]')[0].click();
 assert.equal(JSON.parse(storage).garden[0],'👣','chosen sticker saved into first garden slot');
 assert.equal(JSON.parse(storage).theme,'custom','theme remains after session changes');
+assert.equal(JSON.parse(storage).soundScores.pets.best,6,'sound-world progress is stored');
 // Verify native Back integration from an active modal and a child route.
 get('theme-open').click();
 assert.equal(get('theme-overlay').hidden,false);
@@ -303,6 +359,7 @@ vm.runInNewContext(read('app.js'),{
 assert.match(view.innerHTML,/1\/300/,'a successful lesson survives a WebView reload');
 assert.equal(root.dataset.theme,'custom','custom palette survives restart');
 assert.equal(JSON.parse(storage).garden[0],'👣','sticker placement survives restart');
+assert.equal(JSON.parse(storage).soundScores.pets.best,6,'sound learning remains after restart');
 
 // Fail gracefully on partially corrupted progress, avoiding crashes and HTML injection.
 storage=JSON.stringify({done:[],items:null,days:"broken",level:"invalid",theme:"<img src=x>",
