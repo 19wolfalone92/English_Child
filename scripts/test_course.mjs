@@ -9,6 +9,33 @@ vm.runInNewContext(read('content.js'),{window},{filename:'content.js'});
 vm.runInNewContext(read('phonics.js'),{window},{filename:'phonics.js'});
 assert.equal(window.KIDS_ALPHABET.length,26,'full English alphabet');
 assert.equal(window.KIDS_ALPHABET.map(x=>x.letter).join(''),'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+vm.runInNewContext(read('stories.js'),{window},{filename:'stories.js'});
+vm.runInNewContext(read('dialogues.js'),{window},{filename:'dialogues.js'});
+vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{filename:'adventures.js'});
+assert.equal(window.KIDS_STORIES.length,15,'15 authored original readers');
+assert.equal(window.KIDS_DIALOGUES.length,10,'10 scripted speaking tasks');
+for(const level of ['Pre-A1','A1','A2','B1','B2']){
+ assert.equal(window.KIDS_STORIES.filter(x=>x.level===level).length,3,'three graded stories: '+level);
+ assert.equal(window.KIDS_DIALOGUES.filter(x=>x.level===level).length,2,'two dialogues: '+level);
+}
+for(const story of window.KIDS_STORIES){
+ assert.ok(story.text.length>120,story.id+' has enough narrative');
+ assert.equal(story.questions.length,3,story.id);
+ for(const q of story.questions){
+  assert.equal(q.options.length,4,q.id);
+  assert.ok(Number.isInteger(q.correct) && q.correct>=0 && q.correct<4,q.id);
+  assert.equal(new Set(q.options).size,4,'non-identical distractors: '+q.id);
+  assert.ok(q.explain.length>12,q.id+' must explain the answer');
+ }
+}
+for(const dialogue of window.KIDS_DIALOGUES){
+ assert.equal(dialogue.steps.length,3,dialogue.id);
+ for(const step of dialogue.steps){
+  assert.equal(step.options.length,4,dialogue.id);
+  assert.ok(step.correct>=0 && step.correct<4);
+  assert.equal(new Set(step.options).size,4);
+ }
+}
 const modules=window.KIDS_MODULES;
 assert.equal(modules.length,30,'30 curated themed modules');
 const levels=['Pre-A1','A1','A2','B1','B2'];
@@ -30,6 +57,7 @@ for(const [index,m] of modules.entries()){
 assert.match(read('index.html'),/content.js/);
 assert.match(read('index.html'),/app.js/);
 assert.match(read('index.html'),/phonics.js/);
+for(const file of ['stories.js','dialogues.js','adventures.js','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
 assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote resources');
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
@@ -57,8 +85,20 @@ Object.defineProperty(view,'innerHTML',{get(){return this._html||'';},set(html){
  this._html=html;
  this.nodes=new Map();
  this.options=[...html.matchAll(/data-answer="([^"]+)"/g)].map(match=>fakeElement({answer:match[1]}));
+ this.dataNodes=new Map();
 }});
-view.querySelectorAll=function(sel){return sel==='[data-answer]'?this.options:[];};
+view.querySelectorAll=function(sel){
+ if(sel==='[data-answer]')return this.options;
+ const match=/^\[data-([a-z-]+)\]$/.exec(sel);
+ if(!match)return [];
+ if(!this.dataNodes.has(sel)){
+  const key=match[1],camel=key.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
+  const regex=new RegExp('data-'+key+'="([^"]+)"','g');
+  const nodes=[...this.innerHTML.matchAll(regex)].map(x=>fakeElement({[camel]:x[1]}));
+  this.dataNodes.set(sel,nodes);
+ }
+ return this.dataNodes.get(sel);
+};
 const doc={getElementById(id){return id==='view'?view:get(id);},
  querySelectorAll(sel){return sel==='.bottom button'?buttons:[];}};
 let storage=null;
@@ -69,6 +109,22 @@ vm.runInNewContext(read('app.js'),{
 },{filename:'app.js'});
 
 assert.match(view.innerHTML,/Привет, исследователь/);
+assert.match(view.innerHTML,/Карта приключений/);
+assert.match(view.innerHTML,/Приключения Волчонка/);
+assert.match(view.innerHTML,/Картинки/);
+view.querySelector('#stories-home').click();
+assert.match(view.innerHTML,/Сказки и тайны/);
+view.querySelector('#quest-back').click();
+view.querySelector('#dialogues-play').click();
+assert.match(view.innerHTML,/Говорим с героями/);
+view.querySelector('#quest-back').click();
+view.querySelector('#memory-play').click();
+assert.match(view.innerHTML,/Мастер памяти/);
+view.querySelector('#memory-back').click();
+view.querySelector('#pictures-play').click();
+assert.match(view.innerHTML,/Угадай картинку/);
+view.querySelector('#pictures-exit').click();
+buttons[0].click();
 assert.match(view.innerHTML,/Карта приключений/);
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
 assert.equal((view.innerHTML.match(/data-start="/g)||[]).length,300,'300 session buttons rendered');
@@ -95,4 +151,61 @@ assert.equal(persisted.done['day-001'].best,10);
 assert.equal(persisted.correct,10);
 assert.equal(persisted.items[first[0].id].stage,1);
 assert.equal(persisted.xp,100);
-console.log('PASS: 30 themes; 300 authentic bilingual pairs; 300 sessions; first course session unlocks correctly');
+// Exercise the story reader, comprehension scoring and persistent one-time star reward.
+buttons[1].click();
+view.querySelector('#stories-play').click();
+assert.equal(view.querySelectorAll('[data-story]').length,3);
+view.querySelectorAll('[data-story]')[0].click();
+assert.match(view.innerHTML,/Котёнок и мяч/);
+view.querySelector('#story-questions').click();
+for(const question of window.KIDS_STORIES[0].questions){
+ const good=view.querySelectorAll('[data-q-answer]')[question.correct];
+ assert.ok(good,'story correct option exists');
+ good.click();
+ assert.match(view.querySelector('#quest-notice').innerHTML,/Верно/);
+ view.querySelector('#quest-notice').querySelector('#quest-next').click();
+}
+assert.match(view.innerHTML,/История разгадана/);
+assert.equal(JSON.parse(storage).storyScores['story-01'].best,3);
+assert.equal(JSON.parse(storage).xp,115);
+view.querySelector('#quest-list').click();
+view.querySelector('#quest-back').click();
+// Exercise a complete three-turn conversation.
+view.querySelector('#dialogues-play').click();
+assert.equal(view.querySelectorAll('[data-dialogue]').length,2);
+view.querySelectorAll('[data-dialogue]')[0].click();
+for(const step of window.KIDS_DIALOGUES[0].steps){
+ const good=view.querySelectorAll('[data-dialogue-option]')[step.correct];
+ assert.ok(good);
+ good.click();
+ assert.match(view.querySelector('#dialogue-notice').innerHTML,/Здорово/);
+ view.querySelector('#dialogue-next').click();
+}
+assert.match(view.innerHTML,/Разговор завершён/);
+assert.equal(JSON.parse(storage).dialogueScores['dialogue-01'].best,3);
+assert.equal(JSON.parse(storage).xp,130);
+view.querySelector('#dialogue-list').click();
+view.querySelector('#quest-back').click();
+// Picture game reveals the target and awards stars once upon clearing 8 questions.
+view.querySelector('#pictures-play').click();
+view.querySelector('#pictures-start').click();
+for(let n=0;n<8;n++){
+ const en=view.innerHTML.match(/Найди: <span lang="en">([^<]+)</)?.[1];
+ assert.ok(en,'picture target rendered');
+ const good=view.querySelectorAll('[data-picture]').find(b=>b.dataset.picture===en);
+ assert.ok(good,'matching picture exists');
+ good.click();
+ assert.match(view.querySelector('#picture-feedback').innerHTML,/Ты нашёл/);
+ view.querySelector('#picture-next').click();
+}
+assert.match(view.innerHTML,/Художник-исследователь/);
+assert.equal(JSON.parse(storage).xp,140);
+// Memory game presents ten cards; child can leave without a penalty.
+view.querySelector('#pictures-done').click();
+view.querySelector('#pictures-exit').click();
+view.querySelector('#memory-play').click();
+view.querySelector('#begin-memory').click();
+assert.equal(view.querySelectorAll('[data-memory-card]').length,10);
+view.querySelector('#memory-exit').click();
+assert.match(view.innerHTML,/Мастер памяти/);
+console.log('PASS: 300 lessons, 15 stories/45 Q, 10 dialogues/30 replies, full story + dialogue + picture flows and memory cards');

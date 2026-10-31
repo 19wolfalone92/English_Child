@@ -63,6 +63,27 @@ function setNav(selected){
 function topHero(icon,title,text){
  return `<section class="hero"><div class="hero-emoji" aria-hidden="true">${icon}</div><div class="eyebrow">WOLFIE KIDS · ENGLISH ADVENTURE</div><h1>${esc(title)}</h1><p>${esc(text)}</p></section>`;
 }
+function launchExtra(kind){
+ session=null;setNav('play');
+ const extras=window.KIDS_ADVENTURES;
+ if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
+ extras[kind]({view,state,save,speak,speakAvailable,onExit:renderPlay});
+}
+function achievements(){
+ const stories=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
+ const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
+ const letters=Object.keys(state.alphabetHeard||{}).length;
+ return [
+  {emoji:'🔤',name:'Открыватель букв',earned:letters===26,detail:letters+'/26 букв'},
+  {emoji:'👣',name:'Первый шаг',earned:passed('day-001'),detail:'Первое занятие'},
+  {emoji:'🎨',name:'Художник',earned:Object.values(state.pictureWins||{}).some(x=>x>=6),detail:'Игра с картинками'},
+  {emoji:'🎴',name:'Хранитель слов',earned:Object.keys(state.gameWins||{}).length>0,detail:'Игра в пары'},
+  {emoji:'📚',name:'Сказочник',earned:stories>=3,detail:stories+'/3 истории'},
+  {emoji:'🗣️',name:'Собеседник',earned:talks>=3,detail:talks+'/3 диалога'},
+  {emoji:'🗺️',name:'Путешественник',earned:passed('day-030'),detail:'30 уроков'},
+  {emoji:'🏔️',name:'Весь маршрут',earned:passed('day-300'),detail:'300 уроков'}
+ ];
+}
 function renderHome(){
  session=null;setNav('home');
  const next=nextLesson();
@@ -70,7 +91,11 @@ function renderHome(){
  html+=`<section class="home-stats"><div><strong>${passedCount()}/300</strong><span>занятий</span></div><div><strong>${Math.min(today(),10)}/10</strong><span>цель дня</span></div><div><strong>${state.xp||0}</strong><span>звёзд</span></div></section>`;
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Английская азбука</h2><p>Все 26 букв с озвучиванием и примерами.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
  html+=`<section class="feature"><div class="section-title"><h2>Продолжить путь</h2><span class="badge">Pre-A1 → B2</span></div>${next?`<div class="next"><span class="big-emoji">${modules[next.moduleIndex].emoji}</span><div><strong>Урок ${next.index+1}: ${esc(next.title)}</strong><p>${esc(modes[next.day-1])} · ${esc(modules[next.moduleIndex].level)}</p></div></div><button class="primary" id="continue">▶ Начать урок</button>`:'<p>Все занятия пройдены! Продолжай практику и попробуй независимую проверку знаний.</p>'}</section>`;
+ html+='<section class="feature"><div class="section-title"><h2>🌟 Приключения Волчонка</h2><span class="badge">НОВОЕ</span></div><div class="quest-shortcuts"><button class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>15 историй</small></button><button class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Диалоги</b><small>10 бесед</small></button><button class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Запомни слова</small></button><button class="quest-shortcut" id="pictures-home"><span>🖼️</span><b>Картинки</b><small>Угадай слово</small></button></div></section>';
  html+=`<section class="feature"><h2>Пять ступеней английского 🏔️</h2><p>30 тем × 10 разных занятий. Материал внутри темы повторяется с новыми задачами — так он лучше запоминается.</p><div class="level-grid">${levels.map(level=>{const count=lessons.filter(l=>modules[l.moduleIndex].level===level&&passed(l.id)).length;return `<div class="level-box"><b>${level}</b><span>${esc(levelNames[level])}</span><small>${count}/60</small><div class="bar"><i style="width:${Math.round(count/60*100)}%"></i></div></div>`;}).join('')}</div></section>`;
+
+ const awards=achievements();
+ html+='<section class="feature"><div class="section-title"><h2>🏅 Мои награды</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/'+awards.length+'</span></div><div class="achievement-grid">'+awards.map(a=>'<div class="achievement '+(a.earned?'earned':'')+'"><span>'+a.emoji+'</span><b>'+esc(a.name)+'</b><small>'+esc(a.detail)+'</small></div>').join('')+'</div><p class="muted">Награды остаются с тобой. Можно повторять и учиться в своём темпе!</p></section>';
  html+='<section class="feature"><h2>Карта приключений 🗺️</h2><p>Занятия открываются по порядку. Для следующего шага достаточно 7 правильных ответов из 10.</p>';
  for(let i=0;i<modules.length;i++){
   const m=modules[i];const start=i*10,done=lessons.slice(start,start+10).filter(l=>passed(l.id)).length;
@@ -85,6 +110,10 @@ function renderHome(){
  html+='</section>';
  view.innerHTML=html;
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
+ view.querySelector('#stories-home')?.addEventListener('click',()=>launchExtra('openStories'));
+ view.querySelector('#dialogues-home')?.addEventListener('click',()=>launchExtra('openDialogues'));
+ view.querySelector('#memory-home')?.addEventListener('click',()=>launchExtra('openMemory'));
+ view.querySelector('#pictures-home')?.addEventListener('click',()=>launchExtra('openPictures'));
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
  view.querySelectorAll('[data-start]').forEach(b=>b.addEventListener('click',()=>start(Number(b.dataset.start))));
 }
@@ -93,11 +122,11 @@ function renderAlphabet(){
  const alphabet=Array.isArray(window.KIDS_ALPHABET)?window.KIDS_ALPHABET:[];
  let html=topHero('🔤','Моя английская азбука','Все 26 букв! Нажми на карточку, чтобы услышать букву и слово. Повторяй вслух с волчонком.');
  html+=`<section class="feature"><div class="section-title"><h2>Слушай и повторяй</h2><span class="badge">A–Z · ${alphabet.length}</span></div>
- <div class="alphabet-grid">${alphabet.map(row=>`<button type="button" class="alphabet-card" data-say="${esc(row.letter)}" aria-label="Послушать ${esc(row.letter)} — ${esc(row.word)}"><strong>${esc(row.letter)}</strong><b>${esc(row.word)}</b><small>${esc(row.ru)}</small><span>🔊</span></button>`).join('')}</div><p class="muted">Название буквы и звук в слове могут различаться. Слушай слово целиком. Для озвучивания нужен английский голос в Android.</p><button class="secondary full" id="alphabet-back">← К тренировкам</button></section>`;
+ <div class="alphabet-grid">${alphabet.map(row=>`<button type="button" class="alphabet-card" data-say="${esc(row.letter)}" aria-label="Послушать ${esc(row.letter)} — ${esc(row.word)}"><span class="letter-picture" aria-hidden="true">${esc(row.emoji||"🔤")}</span><strong>${esc(row.letter)}</strong><b>${esc(row.word)}</b><small>${esc(row.ru)}</small><span>🔊</span></button>`).join('')}</div><p class="muted">Название буквы и звук в слове могут различаться. Слушай слово целиком. Для озвучивания нужен английский голос в Android.</p><button class="secondary full" id="alphabet-back">← К тренировкам</button></section>`;
  view.innerHTML=html;
  view.querySelectorAll('[data-say]').forEach(btn=>btn.addEventListener('click',()=>{
   const row=alphabet.find(a=>a.letter===btn.dataset.say);
-  if(row)speak(`${row.letter}. ${row.word}`);
+  if(row){state.alphabetHeard??={};state.alphabetHeard[row.letter]=true;save();speak(`${row.letter}. ${row.word}`);}
  }));
  view.querySelector('#alphabet-back').addEventListener('click',renderPlay);
 }
@@ -106,6 +135,7 @@ function renderPlay(){
  let html=topHero('🎮','Играй и учись','Выбери любую тему. Свободная тренировка не влияет на порядок уроков курса.');
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Буквы A–Z</h2><p>26 букв, слова и произношение.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
  html+='<div class="feature"><h2>Выбери уровень</h2><div class="level-buttons">'+levels.map(level=>`<button class="level-button ${state.level===level?'active':''}" data-level="${level}">${level}</button>`).join('')+'</div></div>';
+ html+='<section class="feature"><h2>🌟 Выбери приключение</h2><div class="quest-shortcuts"><button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читай по смыслу</small></button><button class="quest-shortcut" id="dialogues-play"><span>🗣️</span><b>Диалоги</b><small>Учись общаться</small></button><button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Без таймера</small></button><button class="quest-shortcut" id="pictures-play"><span>🖼️</span><b>Картинки</b><small>Для малышей</small></button></div></section>';
  html+='<section class="feature"><h2>Игры и тренировки</h2><div class="play-grid">';
  for(const [i,m] of modules.entries()){
   if(m.level!==state.level)continue;
@@ -114,6 +144,10 @@ function renderPlay(){
  html+='</div></section>';
  view.innerHTML=html;
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
+ view.querySelector('#stories-play')?.addEventListener('click',()=>launchExtra('openStories'));
+ view.querySelector('#dialogues-play')?.addEventListener('click',()=>launchExtra('openDialogues'));
+ view.querySelector('#memory-play')?.addEventListener('click',()=>launchExtra('openMemory'));
+ view.querySelector('#pictures-play')?.addEventListener('click',()=>launchExtra('openPictures'));
  view.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{state.level=b.dataset.level;save();renderPlay();}));
  view.querySelectorAll('[data-free]').forEach(b=>b.addEventListener('click',()=>startFree(Number(b.dataset.free))));
 }
@@ -132,8 +166,10 @@ function renderReview(){
 function renderFamily(){
  session=null;setNav('family');
  const count=passedCount(),accuracy=state.answers?Math.round((state.correct||0)/state.answers*100):0;
+ const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
+ const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Родителям','Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
+ `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();renderFamily();}});
 }
 function buildKinds(index,level){
@@ -163,13 +199,14 @@ function startFree(moduleIndex){
 function normalize(s){return String(s).normalize('NFKC').toLocaleLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9а-яё ]/gi,'').replace(/\s+/g,' ').trim();}
 function poolOptions(item,side){
  const m=session.module;
+ const limit=m.level==='Pre-A1'?2:m.level==='A1'?3:4;
  const candidates=[...m.items.filter(x=>x.id!==item.id),...modules.filter(x=>x.level===m.level&&x.id!==m.id).flatMap(x=>x.items)];
  const seen=new Set([side==='en'?item.en:item.ru]);
  const out=[item];
  for(const x of shuffle(candidates)){
   const value=side==='en'?x.en:x.ru;
   if(!seen.has(value)){out.push(x);seen.add(value);}
-  if(out.length===4)break;
+  if(out.length===limit)break;
  }
  return shuffle(out);
 }
@@ -269,7 +306,7 @@ function endSession(){
  session=null;setNav(s.kind==='course'?'home':s.kind==='review'?'review':'play');
  const result=passedToday?'🏆':'🌈';
  view.innerHTML=topHero(result,passedToday?'У тебя получилось!':'Каждая попытка важна!',`Верных ответов: ${correct} из ${s.items.length}.`)+
- `<section class="feature"><h2>${passedToday?'Звёздный результат!':'Можно попробовать ещё раз'}</h2><p>${s.kind==='course'?(passedToday?'Следующий урок открыт!':'Для открытия следующего урока нужно минимум 7 ответов из 10.'): 'Ты можешь повторить тему в любое время.'}</p><p>🎤 ${esc(s.module.mission)}</p><p class="muted">Творческую устную и письменную работу программа не оценивает. Попроси взрослого послушать твой рассказ.</p><button class="primary" id="back-home">${s.kind==='course'?'Вернуться к курсу':'К тренировкам'}</button>${s.kind==='course'&&!passedToday?'<button class="secondary full" id="retry-day">↺ Повторить урок</button>':''}</section>`;
+ `<section class="feature"><h2>${passedToday?'Звёздный результат!':'Можно попробовать ещё раз'}</h2><p>${s.kind==='course'?(passedToday?'Следующий урок открыт!':'Для открытия следующего урока нужно минимум 7 ответов из 10.'): 'Ты можешь повторить тему в любое время.'}</p><p>🎤 ${esc(s.module.mission)}</p><p class="muted">🌿 После одного занятия полезно сделать перерыв, потянуться и посмотреть вдаль.</p><p class="muted">Творческую устную и письменную работу программа не оценивает. Попроси взрослого послушать твой рассказ.</p><button class="primary" id="back-home">${s.kind==='course'?'Вернуться к курсу':'К тренировкам'}</button>${s.kind==='course'&&!passedToday?'<button class="secondary full" id="retry-day">↺ Повторить урок</button>':''}</section>`;
  view.querySelector('#back-home').addEventListener('click',()=>s.kind==='course'?renderHome():s.kind==='review'?renderReview():renderPlay());
  view.querySelector('#retry-day')?.addEventListener('click',()=>start(s.lesson.index));
 }

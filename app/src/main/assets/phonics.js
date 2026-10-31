@@ -3,131 +3,157 @@ window.KIDS_ALPHABET = [
   {
     "letter": "A",
     "word": "apple",
-    "ru": "яблоко"
+    "ru": "яблоко",
+    "emoji": "🍎"
   },
   {
     "letter": "B",
     "word": "ball",
-    "ru": "мяч"
+    "ru": "мяч",
+    "emoji": "⚽"
   },
   {
     "letter": "C",
     "word": "cat",
-    "ru": "кот"
+    "ru": "кот",
+    "emoji": "🐈"
   },
   {
     "letter": "D",
     "word": "dog",
-    "ru": "собака"
+    "ru": "собака",
+    "emoji": "🐕"
   },
   {
     "letter": "E",
     "word": "egg",
-    "ru": "яйцо"
+    "ru": "яйцо",
+    "emoji": "🥚"
   },
   {
     "letter": "F",
     "word": "fish",
-    "ru": "рыба"
+    "ru": "рыба",
+    "emoji": "🐟"
   },
   {
     "letter": "G",
     "word": "goat",
-    "ru": "коза"
+    "ru": "коза",
+    "emoji": "🐐"
   },
   {
     "letter": "H",
     "word": "hat",
-    "ru": "шляпа"
+    "ru": "шляпа",
+    "emoji": "🎩"
   },
   {
     "letter": "I",
     "word": "ice",
-    "ru": "лёд"
+    "ru": "лёд",
+    "emoji": "🧊"
   },
   {
     "letter": "J",
     "word": "jam",
-    "ru": "джем"
+    "ru": "джем",
+    "emoji": "🍓"
   },
   {
     "letter": "K",
     "word": "kite",
-    "ru": "воздушный змей"
+    "ru": "воздушный змей",
+    "emoji": "🪁"
   },
   {
     "letter": "L",
     "word": "lion",
-    "ru": "лев"
+    "ru": "лев",
+    "emoji": "🦁"
   },
   {
     "letter": "M",
     "word": "moon",
-    "ru": "луна"
+    "ru": "луна",
+    "emoji": "🌙"
   },
   {
     "letter": "N",
     "word": "nose",
-    "ru": "нос"
+    "ru": "нос",
+    "emoji": "👃"
   },
   {
     "letter": "O",
     "word": "orange",
-    "ru": "апельсин"
+    "ru": "апельсин",
+    "emoji": "🍊"
   },
   {
     "letter": "P",
     "word": "pencil",
-    "ru": "карандаш"
+    "ru": "карандаш",
+    "emoji": "✏️"
   },
   {
     "letter": "Q",
     "word": "queen",
-    "ru": "королева"
+    "ru": "королева",
+    "emoji": "👑"
   },
   {
     "letter": "R",
     "word": "rabbit",
-    "ru": "кролик"
+    "ru": "кролик",
+    "emoji": "🐇"
   },
   {
     "letter": "S",
     "word": "sun",
-    "ru": "солнце"
+    "ru": "солнце",
+    "emoji": "☀️"
   },
   {
     "letter": "T",
     "word": "tree",
-    "ru": "дерево"
+    "ru": "дерево",
+    "emoji": "🌳"
   },
   {
     "letter": "U",
     "word": "umbrella",
-    "ru": "зонт"
+    "ru": "зонт",
+    "emoji": "☂️"
   },
   {
     "letter": "V",
     "word": "van",
-    "ru": "фургон"
+    "ru": "фургон",
+    "emoji": "🚐"
   },
   {
     "letter": "W",
     "word": "water",
-    "ru": "вода"
+    "ru": "вода",
+    "emoji": "💧"
   },
   {
     "letter": "X",
     "word": "xylophone",
-    "ru": "ксилофон"
+    "ru": "ксилофон",
+    "emoji": "🎼"
   },
   {
     "letter": "Y",
     "word": "yellow",
-    "ru": "жёлтый"
+    "ru": "жёлтый",
+    "emoji": "🟡"
   },
   {
     "letter": "Z",
     "word": "zebra",
-    "ru": "зебра"
+    "ru": "зебра",
+    "emoji": "🦓"
   }
 ];
