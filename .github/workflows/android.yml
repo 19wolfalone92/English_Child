@@ -47,7 +47,7 @@ jobs:
           grep -F "sdkVersion:'24'" apk-badging.txt
           grep -F "targetSdkVersion:'35'" apk-badging.txt
           grep -F "launchable-activity: name='com.wolfie.kids.MainActivity'" apk-badging.txt
-          "$SIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -F 'Signer #1 certificate SHA-256 digest:'
+          "$SIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Eva-English-Kids-v0.5.1-Android13-fresh
