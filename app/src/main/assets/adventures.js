@@ -34,7 +34,7 @@ function openStories(api){
  ctx=api;current=null;
  const level=api.state.level||'Pre-A1';
  const list=stories.filter(x=>x.level===level);
- let html=title('📚','Сказки для '+childGenitive(),'Ева, послушай интересную историю, а потом ответь на вопросы!');
+ let html=title('📚','Сказки для '+childGenitive(),childName()+', послушай интересную историю, а потом ответь на вопросы!');
  html+=`<section class="feature"><h2>Выбери ступень</h2>${levelRow('story')}<div class="quest-grid">`;
  for(const story of list){
   const best=api.state.storyScores?.[story.id]?.best||0;
@@ -90,7 +90,7 @@ function openDialogues(api){
  ctx=api;current=null;
  const level=api.state.level||'Pre-A1';
  const list=dialogues.filter(x=>x.level===level);
- let html=title('🗣️','Ева разговаривает с героями','Помоги герою подобрать ответ и повтори его вслух!');
+ let html=title('🗣️',childName()+' разговаривает с героями','Помоги герою подобрать ответ и повтори его вслух!');
  html+=`<section class="feature"><h2>Выбери ступень</h2>${levelRow('dialogue')}<div class="quest-grid">`;
  for(const d of list){
   const best=api.state.dialogueScores?.[d.id]?.best||0;
@@ -141,7 +141,7 @@ function dialogueEnd(){
 }
 function openMemory(api){
  ctx=api;current=null;cardGame=null;
- let html=title('🧠','Ева — мастер памяти!','Найди пары: английское слово и его перевод. Ошибаться можно — мы учимся!');
+ let html=title('🧠',childName()+' — мастер памяти!','Найди пары: английское слово и его перевод. Ошибаться можно — мы учимся!');
  html+=`<section class="feature"><h2>Уровень слов</h2>${levelRow('memory')}<p>Пять пар · без таймера · без проигрыша · слушай правильные слова.</p><button class="primary" id="begin-memory">🎴 Играть в пары</button><button class="secondary full" id="memory-back">← К играм</button></section>`;
  ctx.view.innerHTML=html;bindLevel('memory');
  back('#begin-memory',startMemory);back('#memory-back',api.onExit);
@@ -200,7 +200,7 @@ const pictures=[
 {en:'shoe',ru:'туфля',emoji:'👞'}];
 function openPictures(api){
  ctx=api;current=null;
- ctx.view.innerHTML=title('🖼️','Ева, угадай картинку!','Послушай слово на английском и найди подходящую картинку.')+
+ ctx.view.innerHTML=title('🖼️',childName()+', угадай картинку!','Послушай слово на английском и найди подходящую картинку.')+
  `<section class="feature"><h2>24 знакомых предмета</h2><p>Восемь заданий за игру, без таймера и наказаний за ошибки. Для начинающих Pre-A1/A1.</p><button class="primary" id="pictures-start">🎨 Играть с картинками</button><button class="secondary full" id="pictures-exit">← К играм</button></section>`;
  back('#pictures-start',startPictures);back('#pictures-exit',ctx.onExit);
 }
