@@ -77,7 +77,7 @@ public final class MainActivity extends Activity {
         try {
             Intent intent = new Intent(exporting ? Intent.ACTION_CREATE_DOCUMENT : Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("application/json");
+            intent.setType(exporting ? "application/json" : "*/*");
             if(exporting) intent.putExtra(Intent.EXTRA_TITLE, "Eva-English-Kids-progress.json");
             startActivityForResult(intent, exporting ? EXPORT_REQUEST : IMPORT_REQUEST);
         } catch(Exception e) {
@@ -99,7 +99,7 @@ public final class MainActivity extends Activity {
                 backup.put("progress", new JSONObject(progress));
                 byte[] bytes = backup.toString(2).getBytes(StandardCharsets.UTF_8);
                 if(bytes.length > LIMIT) throw new IllegalArgumentException("Слишком большой файл");
-                try(OutputStream out = getContentResolver().openOutputStream(uri, "w")) {
+                try(OutputStream out = getContentResolver().openOutputStream(uri, "wt")) {
                     if(out == null) throw new IllegalStateException("Нет доступа к файлу");
                     out.write(bytes);
                     out.flush();
