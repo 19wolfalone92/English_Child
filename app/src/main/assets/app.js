@@ -1,7 +1,7 @@
 (function kidsApp() {
 'use strict';
 const identity=window.KIDS_IDENTITY;
-if(!identity || identity.name!=='Ева' || identity.englishName!=='Eva')throw new Error('Eva profile is missing');
+if(!identity || typeof identity.name!=='string' || !identity.name.trim() || typeof identity.englishName!=='string')throw new Error('Child profile is missing');
 const child=(form='name')=>identity[form]||identity.name;
 const modules = Array.isArray(window.KIDS_MODULES) ? window.KIDS_MODULES : [];
 const levels = ['Pre-A1', 'A1', 'A2', 'B1', 'B2'];
