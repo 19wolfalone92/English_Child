@@ -291,7 +291,7 @@ vm.runInNewContext(read('app.js'),{
  setTimeout(){return 0;},confirm(){return true;},alert(){},
  SpeechSynthesisUtterance:function(){}
 },{filename:'reload-app.js'});
-assert.match(view.innerHTML,/1\\/300/,'a successful lesson survives a WebView reload');
+assert.match(view.innerHTML,/1\/300/,'a successful lesson survives a WebView reload');
 assert.equal(root.dataset.theme,'custom','custom palette survives restart');
 assert.equal(JSON.parse(storage).garden[0],'👣','sticker placement survives restart');
 
@@ -306,8 +306,8 @@ vm.runInNewContext(read('app.js'),{
 },{filename:'corrupt-progress-app.js'});
 assert.match(view.innerHTML,/Привет,<br>Ева!/);
 assert.equal(root.dataset.theme,'lilac','invalid theme falls back safely');
-assert.doesNotMatch(view.innerHTML,/<script>alert\\(1\\)<\\/script>/);
-assert.match(view.innerHTML,/0\\/300/);
+assert.doesNotMatch(view.innerHTML,/<script>alert\(1\)<\/script>/);
+assert.match(view.innerHTML,/0\/300/);
 buttons[3].click();
 assert.match(view.innerHTML,/Волшебный сад Евы/);
 
@@ -326,7 +326,7 @@ for(let dayIndex=0;dayIndex<300;dayIndex++){
   const item=module.items[((dayIndex%10)+1+q)%10];
   if(view.innerHTML.includes('id="check-words"')){
    const tokens=view.querySelectorAll('[data-token]').slice().sort((a,b)=>Number(a.dataset.token)-Number(b.dataset.token));
-   assert.equal(tokens.length,item.en.split(/\\s+/).length,'all word tokens offered');
+   assert.equal(tokens.length,item.en.split(/\s+/).length,'all word tokens offered');
    for(const token of tokens)token.click();
    view.querySelector('#check-words').click();
   }else if(view.innerHTML.includes('id="check-type"')){
@@ -343,7 +343,7 @@ for(let dayIndex=0;dayIndex<300;dayIndex++){
  assert.match(view.innerHTML,/Следующий урок открыт/,'lesson '+(dayIndex+1)+' passed');
  view.querySelector('#back-home').click();
 }
-assert.match(view.innerHTML,/300\\/300/,'all 300 lessons complete');
+assert.match(view.innerHTML,/300\/300/,'all 300 lessons complete');
 const full=JSON.parse(storage);
 assert.equal(Object.keys(full.done).length,300);
 assert.ok(Object.values(full.done).every(v=>v.passed),'no hidden locked lessons');
