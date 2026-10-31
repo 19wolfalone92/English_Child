@@ -17,6 +17,7 @@ jobs:
       - name: Validate child course and JavaScript
         run: |
           node scripts/test_course.mjs
+          node scripts/audit_assets.mjs
           for f in app/src/main/assets/*.js; do node --check "$f"; done
       - uses: actions/setup-java@v4
         with:
@@ -40,6 +41,6 @@ jobs:
           "$SIGNER" verify --verbose app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Eva-English-Kids-v0.4.1-debug
+          name: Eva-English-Kids-v0.5.0-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
