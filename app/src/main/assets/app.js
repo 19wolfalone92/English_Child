@@ -8,7 +8,7 @@ const lessons = modules.flatMap((m,i)=>Array.from({length:10},(_,n)=>({id:'day-'
 const lookup = new Map(modules.flatMap(m=>m.items.map(item=>[item.id,item])));
 const view = document.getElementById('view');
 const bridge = window.KidsAndroid || null;
-const fresh = () => ({done:{},items:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1'});
+const fresh = () => ({done:{},items:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1',theme:'lilac'});
 let state=fresh();
 try {
  const saved=bridge ? bridge.loadProgress() : localStorage.getItem('kids-progress-v1');
@@ -64,7 +64,7 @@ function topHero(icon,title,text){
  return `<section class="hero"><div class="hero-emoji" aria-hidden="true">${icon}</div><div class="eyebrow">WOLFIE KIDS · ENGLISH ADVENTURE</div><h1>${esc(title)}</h1><p>${esc(text)}</p></section>`;
 }
 function launchExtra(kind){
- session=null;setNav('play');
+ session=null;setNav(kind==='openStories'?'stories':'play');
  const extras=window.KIDS_ADVENTURES;
  if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
  extras[kind]({view,state,save,speak,speakAvailable,onExit:renderPlay});
@@ -84,6 +84,93 @@ function achievements(){
   {emoji:'🏔️',name:'Весь маршрут',earned:passed('day-300'),detail:'300 уроков'}
  ];
 }
+
+const palettes=[
+{id:'lilac',name:'💜 Сиреневое чудо',primary:'#7451b8',accent:'#f1a96b',bg:'#fff8f3'},
+{id:'strawberry',name:'🍓 Клубника',primary:'#b53671',accent:'#f89a78',bg:'#fff3f5'},
+{id:'mint',name:'🌿 Мята',primary:'#237c76',accent:'#efac5b',bg:'#f1fff8'},
+{id:'sky',name:'🦋 Голубое небо',primary:'#376eb2',accent:'#f2ac7d',bg:'#f3faff'},
+{id:'sunshine',name:'🌻 Солнышко',primary:'#ad5b28',accent:'#f8bd54',bg:'#fffaf0'},
+{id:'rainbow',name:'🌈 Радуга',primary:'#6654bc',accent:'#ed81ad',bg:'#fff9ff'}
+];
+const isHex=h=>/^#[0-9a-f]{6}$/i.test(h);
+const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+const blend=(a,b,t)=>{
+ const c=rgb(a),d=rgb(b);
+ return '#'+c.map((v,i)=>Math.round(v*(1-t)+d[i]*t).toString(16).padStart(2,'0')).join('');
+};
+function onPrimary(hex){
+ const [r,g,b]=rgb(hex).map(v=>{const s=v/255;return s<=0.04045?s/12.92:((s+.055)/1.055)**2.4;});
+ return .2126*r+.7152*g+.0722*b>.38?'#262139':'#ffffff';
+}
+function applyTheme(){
+ const root=document.documentElement;if(!root)return;
+ const name=palettes.some(x=>x.id===state.theme)?state.theme:state.theme==='custom'?'custom':'lilac';
+ root.dataset.theme=name;
+ const style=root.style;
+ const settings=['--ui-primary','--ui-deep','--ui-accent','--ui-bg','--ui-soft','--ui-sky','--ui-highlight','--ui-border','--ui-softglow','--ui-on-primary'];
+ if(name==='custom'){
+  const p=isHex(state.customPrimary)?state.customPrimary:'#7451b8',a=isHex(state.customAccent)?state.customAccent:'#f1a96b';
+  const values={
+   '--ui-primary':p,'--ui-deep':blend(p,'#111021',.38),'--ui-accent':a,
+   '--ui-bg':blend(p,'#ffffff',.955),'--ui-soft':blend(p,'#ffffff',.77),
+   '--ui-sky':blend(a,'#ffffff',.79),'--ui-highlight':blend(a,'#ffffff',.71),
+   '--ui-border':blend(p,'#ffffff',.83),'--ui-softglow':'rgba(90,60,100,.18)','--ui-on-primary':onPrimary(p)
+  };
+  for(const key of settings)style.setProperty(key,values[key]);
+ }else{
+  for(const key of settings)style.removeProperty(key);
+ }
+ const bg=name==='custom'?blend(isHex(state.customPrimary)?state.customPrimary:'#7451b8','#ffffff',.955):(palettes.find(x=>x.id===name)?.bg||'#fff8f3');
+ try{bridge?.setSystemBarColor?.(bg);}catch(error){console.warn('System colors unavailable',error);}
+}
+function setTheme(theme){
+ if(!(theme==='custom'||palettes.some(x=>x.id===theme)))return;
+ state.theme=theme;save();applyTheme();renderThemeChooser();
+}
+function closeThemeChooser(){
+ const overlay=document.getElementById('theme-overlay');
+ if(overlay){overlay.hidden=true;overlay.innerHTML='';}
+ document.getElementById('theme-open')?.focus?.();
+}
+function renderThemeChooser(){
+ const overlay=document.getElementById('theme-overlay');if(!overlay)return;
+ overlay.hidden=false;
+ const p=isHex(state.customPrimary)?state.customPrimary:'#7451b8',a=isHex(state.customAccent)?state.customAccent:'#f1a96b';
+ overlay.innerHTML='<div class="theme-sheet" role="dialog" aria-modal="true" aria-labelledby="theme-title" tabindex="-1">'+
+ '<div class="section-lead"><h2 id="theme-title">🎨 Мои цвета</h2><span class="badge">Волшебная палитра</span></div><p>Выбери любимое настроение. Цвета останутся даже после закрытия приложения!</p>'+
+ '<div class="theme-grid">'+palettes.map(x=>'<button type="button" data-palette="'+x.id+'" class="theme-choice '+((state.theme||'lilac')===x.id?'selected':'')+'" aria-pressed="'+((state.theme||'lilac')===x.id)+'"><span class="theme-swatches"><i style="background:'+x.primary+'"></i><i style="background:'+x.accent+'"></i><i style="background:'+x.bg+'"></i></span><b>'+x.name+'</b></button>').join('')+'</div>'+
+ '<div class="theme-custom"><h3>✨ Придумай свои цвета!</h3><div class="theme-pickers">'+
+ '<label>Главный цвет<input id="custom-main" type="color" value="'+p+'" aria-label="Выбери основной цвет"></label>'+
+ '<label>Цвет волшебства<input id="custom-accent" type="color" value="'+a+'" aria-label="Выбери дополнительный цвет"></label></div>'+
+ '<p class="muted">Выбирай цвет — экран изменится сам.</p></div>'+
+ '<button class="primary theme-close" id="theme-close">🌸 Готово!</button></div>';
+ overlay.querySelectorAll('[data-palette]').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.palette)));
+ const change=()=>{
+  const main=overlay.querySelector('#custom-main'),accent=overlay.querySelector('#custom-accent');
+  if(!main||!accent||!isHex(main.value)||!isHex(accent.value))return;
+  state.customPrimary=main.value;state.customAccent=accent.value;state.theme='custom';save();applyTheme();
+ };
+ overlay.querySelector('#custom-main')?.addEventListener('input',change);
+ overlay.querySelector('#custom-accent')?.addEventListener('input',change);
+ overlay.querySelector('#theme-close')?.addEventListener('click',closeThemeChooser);
+ overlay.querySelector('[role="dialog"]')?.focus?.();
+}
+function renderParentGate(){
+ session=null;setNav('home');
+ const a=17+Math.floor(Math.random()*17),b=19+Math.floor(Math.random()*17);
+ view.innerHTML=topHero('👨‍👩‍👧','Вход для взрослых','Здесь находятся настройки и отчёт для родителей.')+
+ `<section class="feature parent-gate"><h2>🔒 Только для взрослых</h2><p>Решите пример, чтобы открыть настройки.</p><label for="parent-answer"><strong>Сколько будет ${a} + ${b}?</strong></label><input type="number" inputmode="numeric" pattern="[0-9]*" id="parent-answer" class="text-input" placeholder="Ответ" aria-label="Ответ на пример" max="999"><p id="parent-error" role="status"></p><button class="primary" id="parent-check">Открыть для родителей</button><button class="secondary full" id="parent-back">← Назад</button></section>`;
+ const check=()=>{
+  const input=view.querySelector('#parent-answer');
+  if(Number(input?.value)===a+b&&String(input?.value).trim()!=='')renderFamily();
+  else{const e=view.querySelector('#parent-error');if(e)e.textContent='Попробуйте ещё раз.';}
+ };
+ view.querySelector('#parent-check')?.addEventListener('click',check);
+ view.querySelector('#parent-answer')?.addEventListener('keydown',e=>{if(e.key==='Enter')check();});
+ view.querySelector('#parent-back')?.addEventListener('click',renderHome);
+}
+
 function renderHome(){
  session=null;setNav('home');
  const next=nextLesson(),doneCount=passedCount(),awards=achievements();
@@ -211,7 +298,7 @@ function renderRewards(){
  }));
 }
 function renderReview(){
- session=null;setNav('review');
+ session=null;setNav('play');
  const now=Date.now();
  const due=[...lookup.values()].filter(x=>state.items[x.id]&&state.items[x.id].due<=now);
  view.innerHTML=topHero('🧠','Пора вспомнить!','Знакомые слова возвращаются через 1, 3, 7, 14 и 30 дней.')+
@@ -223,7 +310,7 @@ function renderReview(){
  });
 }
 function renderFamily(){
- session=null;setNav('family');
+ session=null;setNav('home');
  const count=passedCount(),accuracy=state.answers?Math.round((state.correct||0)/state.answers*100):0;
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
@@ -369,11 +456,16 @@ function endSession(){
  view.querySelector('#back-home').addEventListener('click',()=>s.kind==='course'?renderHome():s.kind==='review'?renderReview():renderPlay());
  view.querySelector('#retry-day')?.addEventListener('click',()=>start(s.lesson.index));
 }
+document.getElementById('theme-open')?.addEventListener('click',renderThemeChooser);
+document.getElementById('family-open')?.addEventListener('click',renderParentGate);
+document.getElementById('theme-overlay')?.addEventListener('click',e=>{if(e.target?.id==='theme-overlay')closeThemeChooser();});
+document.addEventListener?.('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('theme-overlay')?.hidden)closeThemeChooser();});
+applyTheme();
 document.querySelectorAll('.bottom button').forEach(b=>b.addEventListener('click',()=>{
  if(b.dataset.tab==='home')renderHome();
  if(b.dataset.tab==='play')renderPlay();
- if(b.dataset.tab==='review')renderReview();
- if(b.dataset.tab==='family')renderFamily();
+ if(b.dataset.tab==='stories')launchExtra('openStories');
+ if(b.dataset.tab==='rewards')renderRewards();
 }));
 renderHome();
 })();
