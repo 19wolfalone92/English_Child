@@ -37,6 +37,7 @@ function recoverData(x){
  }
  r.storyScores=cleanScores(x.storyScores);
  r.dialogueScores=cleanScores(x.dialogueScores);
+ r.soundScores=cleanScores(x.soundScores);
  r.pictureWins=Object.fromEntries(Object.entries(safeRecord(x.pictureWins)).filter(([key])=>/^\d{4}-\d{2}-\d{2}$/.test(key))
   .map(([key,v])=>[key,boundedNumber(v,8)]));
  r.gameWins=Object.fromEntries(Object.entries(safeRecord(x.gameWins)).filter(([key])=>key.length<60)
@@ -140,6 +141,12 @@ function launchExtra(kind){
  const extras=window.KIDS_ADVENTURES;
  if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
  extras[kind]({view,state,save,speak,speakHint,speakAvailable,onExit:renderPlay,identity});
+}
+function launchSoundGarden(){
+ session=null;setNav('play');
+ const game=window.KIDS_SOUND_GARDEN;
+ if(!game||typeof game.open!=='function'){renderPlay();return;}
+ game.open({view,state,save,speak,speakAvailable,speakHint,identity,onExit:renderPlay});
 }
 function achievements(){
  const stories=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
@@ -256,9 +263,16 @@ function renderHome(){
   html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">${state.activeCourse?.lessonIndex===next.index?'▶ Продолжить занятие':'▶ Играть и учиться'}</button>`;
  }else html+='<p>Ты прошла весь маршрут! Можешь выбрать игру, сказку или повторение.</p><button class="primary" id="home-game">🎮 Выбрать игру</button>';
  html+='<button class="child-voice" id="home-voice" type="button">🔊 Послушать Вулфи</button></section>';
- html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("name"))+' и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
+ html+='<section class="magic-map" aria-label="Волшебная долина Евы"><div class="magic-map-title"><h2>🏰 Волшебный мир Евы</h2><span class="badge">Играй и открывай!</span></div><div class="magic-map-scene">'+
+ '<button type="button" class="map-bubble lesson" id="world-lesson"><span class="map-emoji">🏰</span>Уроки</button>'+
+ '<button type="button" class="map-bubble listening" id="world-sound"><span class="map-emoji">🎧</span>Звуковой лес</button>'+
+ '<button type="button" class="map-bubble stories" id="world-stories"><span class="map-emoji">📚</span>Сказки</button>'+
+ '<button type="button" class="map-bubble garden" id="world-garden"><span class="map-emoji">🌸</span>Сад Евы</button>'+
+ '</div><p class="magic-map-footer">🌈 Выбери домик или полянку. Все дорожки безопасные и работают без интернета!</p></section>';
+html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("name"))+' и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
  '<button type="button" class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+
  '<button type="button" class="quest-shortcut" id="pictures-home"><span>🎨</span><b>Картинки</b><small>Угадывать слова</small></button>'+
+ '<button type="button" class="quest-shortcut" id="sound-home"><span>🎧</span><b>Звуковой лес</b><small>48 знакомых слов</small></button>'+
  '<button type="button" class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+
  '<button type="button" class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Играть и помнить</small></button></div></section>';
  html+='<section class="feature"><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
@@ -285,6 +299,11 @@ function renderHome(){
  view.querySelector('#home-voice')?.addEventListener('click',()=>speakHint('Привет, '+child('name')+'! Я волчонок Вулфи. Давай вместе учить английский! Нажми на большую кнопку, чтобы начать урок. Или выбери игру ниже.'));
  view.querySelector('#home-game')?.addEventListener('click',renderPlay);
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
+ view.querySelector('#world-lesson')?.addEventListener('click',()=>next&&start(next.index));
+ view.querySelector('#world-sound')?.addEventListener('click',launchSoundGarden);
+ view.querySelector('#world-stories')?.addEventListener('click',()=>launchExtra('openStories'));
+ view.querySelector('#world-garden')?.addEventListener('click',renderRewards);
+ view.querySelector('#sound-home')?.addEventListener('click',launchSoundGarden);
  view.querySelector('#stories-home')?.addEventListener('click',()=>launchExtra('openStories'));
  view.querySelector('#dialogues-home')?.addEventListener('click',()=>launchExtra('openDialogues'));
  view.querySelector('#memory-home')?.addEventListener('click',()=>launchExtra('openMemory'));
@@ -309,7 +328,8 @@ function renderAlphabet(){
 function renderPlay(){
  session=null;setNav('play');
  let html=topHero('🎲',child('name')+', давай играть!','Какую игру выберем? Просто нажми на большую картинку!');
- html+='<section class="feature"><div class="section-lead"><h2>🎮 Выбери игру</h2><span class="badge">4 игры</span></div><div class="quest-shortcuts">'+
+ html+='<section class="feature"><div class="section-lead"><h2>🎮 Выбери игру</h2><span class="badge">5 игр</span></div><div class="quest-shortcuts">'+
+ '<button class="quest-shortcut" id="sound-play-game"><span>🎧</span><b>Звуковой лес</b><small>Слушай и находи</small></button>'+
  '<button class="quest-shortcut" id="pictures-play"><span>🖼️</span><b>Угадай картинку</b><small>Для самых маленьких</small></button>'+
  '<button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Играй со словами</small></button>'+
  '<button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читаем вместе</small></button>'+
@@ -331,6 +351,7 @@ function renderPlay(){
  view.querySelector('#dialogues-play')?.addEventListener('click',()=>launchExtra('openDialogues'));
  view.querySelector('#memory-play')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelector('#pictures-play')?.addEventListener('click',()=>launchExtra('openPictures'));
+ view.querySelector('#sound-play-game')?.addEventListener('click',launchSoundGarden);
  view.querySelector('#review-play')?.addEventListener('click',renderReview);
  view.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{state.level=b.dataset.level;save();renderPlay();}));
  view.querySelectorAll('[data-free]').forEach(b=>b.addEventListener('click',()=>startFree(Number(b.dataset.free))));
