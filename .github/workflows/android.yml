@@ -39,8 +39,17 @@ jobs:
           SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
           test -n "$SIGNER"
           "$SIGNER" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          # Android 13 compatible min/target SDK, package ID and launcher class.
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
+          test -n "$AAPT"
+          "$AAPT" dump badging app/build/outputs/apk/debug/app-debug.apk > apk-badging.txt
+          grep -F "package: name='com.eva.english.kids'" apk-badging.txt
+          grep -F "sdkVersion:'24'" apk-badging.txt
+          grep -F "targetSdkVersion:'35'" apk-badging.txt
+          grep -F "launchable-activity: name='com.wolfie.kids.MainActivity'" apk-badging.txt
+          "$SIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Eva-English-Kids-v0.5.0-debug
+          name: Eva-English-Kids-v0.5.1-Android13-fresh
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

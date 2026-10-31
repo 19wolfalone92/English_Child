@@ -32,7 +32,13 @@ for(const [name,svg] of [['landscape',scene],['character',character]]){
 }
 const jsContent=javascript.map(file).join('\n');
 assert.doesNotMatch(jsContent,/\bfetch\s*\(|new\s+XMLHttpRequest|new\s+WebSocket|navigator\.sendBeacon/,'no networking code in child application');
+const gradle=fs.readFileSync(path.join(base,'../../../build.gradle'),'utf8');
+assert.match(gradle,/applicationId 'com\.eva\.english\.kids'/,'Android 13 fresh-install application ID');
+assert.match(gradle,/minSdk 24/,'Android 13 supported by minSdk 24');
+assert.match(gradle,/targetSdk 35/,'newer Android supported');
+assert.match(gradle,/versionCode 7/,'higher version for diagnostic variant');
 const manifest=fs.readFileSync(path.join(base,'../AndroidManifest.xml'),'utf8');
+assert.match(manifest,/android:name="com\.wolfie\.kids\.MainActivity"/,'explicit launchable class under the original Java namespace');
 assert.match(manifest,/android:allowBackup="false"/);
 assert.doesNotMatch(manifest,/android\.permission\./,'child app needs no permissions');
 console.log('PASS: '+javascript.length+' scripts, '+styles.length+' styles, 2 original safe SVG illustrations; local-only assets and no Android permissions');
