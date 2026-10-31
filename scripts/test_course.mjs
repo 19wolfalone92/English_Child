@@ -182,7 +182,7 @@ assert.match(view.innerHTML,/id="export-progress"/);
 assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
 assert.match(view.innerHTML,/id="toggle-advanced"/);
-assert.equal(JSON.parse(storage).advancedContent,undefined,'older state has no advanced flag yet');
+assert.equal(JSON.parse(storage).advancedContent,false,'gentle mode is the default');
 view.querySelector('#toggle-advanced').click();
 assert.equal(JSON.parse(storage).advancedContent,true,'parent can enable advanced play');
 view.querySelector('#family-back').click();
