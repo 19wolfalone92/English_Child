@@ -48,8 +48,9 @@ function readStory(id){
  current={kind:'story',story,index:0,points:0,answered:false};
  const paras=story.text.split(/(?<=[.!?])\s+(?=[A-Z])/).reduce((groups,x,i)=>{const gi=Math.floor(i/3);(groups[gi]??=[]).push(x);return groups;},[]).map(x=>`<p>${esc(x.join(' '))}</p>`).join('');
  ctx.view.innerHTML=title(story.emoji,story.title,story.intro)+
- `<section class="feature reading"><div class="reading-header"><span class="badge">${esc(story.level)} · Читаем</span><button type="button" class="sound" id="read-aloud" ${ctx.speakAvailable()?'':'disabled'}>🔊 Слушать</button></div><div class="story-text" lang="en">${paras}</div><div class="note">Не торопись. Прочитай два раза, а потом ответь на три вопроса. Можно вернуться к рассказу в любой момент.</div><button class="primary" id="story-questions">🧠 Проверить понимание</button><button class="secondary full" id="story-back">← К историям</button></section>`;
+ `<section class="feature reading"><div class="reading-header"><span class="badge">${esc(story.level)} · Читаем</span><button type="button" class="sound" id="read-aloud" ${ctx.speakAvailable()?'':'disabled'}>🔊 Слушать</button></div><button class="child-voice" id="story-guide">🔊 Что делать?</button><div class="story-text" lang="en">${paras}</div><div class="note">Не торопись. Прочитай два раза, а потом ответь на три вопроса. Можно вернуться к рассказу в любой момент.</div><button class="primary" id="story-questions">🧠 Проверить понимание</button><button class="secondary full" id="story-back">← К историям</button></section>`;
  back('#read-aloud',()=>ctx.speak(story.text));
+ back('#story-guide',()=>ctx.speakHint?.('Нажми на кнопку слушать, чтобы услышать сказку. Потом попробуй ответить на три вопроса. Ты можешь попросить взрослого помочь.'));
  back('#story-questions',storyQuestion);
  back('#story-back',()=>openStories(ctx));
 }
@@ -60,8 +61,9 @@ function storyQuestion(){
  const q=s.story.questions[s.index];
  ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="to-stories">← Назад</button><span>Вопрос ${s.index+1} / ${s.story.questions.length}</span><span class="badge">${esc(s.story.level)}</span></div>
  <div class="bar"><i style="width:${Math.round(s.index/s.story.questions.length*100)}%"></i></div>
- <section class="feature"><span class="eyebrow">📚 ${esc(s.story.title)}</span><h1 class="quest-question">${esc(q.prompt)}</h1><div class="answers">${q.options.map((a,i)=>`<button class="answer" type="button" data-q-answer="${i}">${esc(a)}</button>`).join('')}</div><div id="quest-notice" aria-live="polite"></div></section>`;
+ <section class="feature"><span class="eyebrow">📚 ${esc(s.story.title)}</span><h1 class="quest-question">${esc(q.prompt)}</h1><button class="child-voice" id="question-audio">🔊 Вопрос вслух</button><div class="answers">${q.options.map((a,i)=>`<button class="answer" type="button" data-q-answer="${i}">${esc(a)}</button>`).join('')}</div><div id="quest-notice" aria-live="polite"></div></section>`;
  back('#to-stories',()=>readStory(s.story.id));
+ back('#question-audio',()=>ctx.speak(q.prompt));
  ctx.view.querySelectorAll('[data-q-answer]').forEach(b=>b.addEventListener('click',()=>{
   if(s.answered)return;
   s.answered=true;const n=Number(b.dataset.qAnswer),good=n===q.correct;s.points+=Number(good);
@@ -111,9 +113,10 @@ function dialogueQuestion(){
  ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="to-dialogues">← Назад</button><span>Реплика ${s.index+1} / 3</span><span class="badge">${esc(s.dialogue.level)}</span></div><section class="feature">
  <div class="dialogue-character">${s.dialogue.emoji} <span class="speech-bubble" lang="en">${esc(step.prompt)}</span></div>
  <button class="sound" id="say-dialogue" ${ctx.speakAvailable()?'':'disabled'}>🔊 Слушать героя</button>
- <h2>Что лучше ответить?</h2><div class="answers">${step.options.map((v,i)=>`<button type="button" class="answer" data-dialogue-option="${i}">${esc(v)}</button>`).join('')}</div><div id="dialogue-notice" aria-live="polite"></div></section>`;
+ <button class="child-voice" id="dialogue-guide">🔊 Что делать?</button><h2>Что лучше ответить?</h2><div class="answers">${step.options.map((v,i)=>`<button type="button" class="answer" data-dialogue-option="${i}">${esc(v)}</button>`).join('')}</div><div id="dialogue-notice" aria-live="polite"></div></section>`;
  back('#to-dialogues',()=>openDialogues(ctx));
  back('#say-dialogue',()=>ctx.speak(step.prompt));
+ back('#dialogue-guide',()=>ctx.speakHint?.('Послушай героя. Выбери подходящий ответ и попробуй повторить его вслух.'));
  ctx.view.querySelectorAll('[data-dialogue-option]').forEach(btn=>btn.addEventListener('click',()=>{
   if(s.answered)return;s.answered=true;
   const i=Number(btn.dataset.dialogueOption),good=i===step.correct;s.points+=Number(good);

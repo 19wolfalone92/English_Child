@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="500" viewBox="0 0 420 500" role="img" aria-labelledby="wolf-title">
+<title id="wolf-title">Добрый волчонок Вулфи со звёздочкой</title>
+<defs>
+<linearGradient id="fur" x2=".8" y2="1"><stop stop-color="#c5bddb"/><stop offset="1" stop-color="#9b90bf"/></linearGradient>
+<linearGradient id="dress" x2="0" y2="1"><stop stop-color="#ab83dc"/><stop offset="1" stop-color="#7958b8"/></linearGradient>
+<linearGradient id="belly" x2=".7" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#fff0e6"/></linearGradient>
+</defs>
+<!-- soft ground -->
+<ellipse cx="225" cy="475" rx="126" ry="18" fill="#524381" opacity=".11"/>
+<!-- tail -->
+<path d="M300 350c103-36 91 49 44 76-20 12-51 12-76-2l-5-52z" fill="url(#fur)" stroke="#645a83" stroke-width="8" stroke-linejoin="round"/>
+<path d="M348 377c25 12 13 39-26 44-13 2-26-1-37-7z" fill="#fff9f2"/>
+<!-- ears -->
+<path d="M114 155 73 25Q70 7 88 16l103 74zM257 94 354 17Q369 7 363 29l-19 125z" fill="url(#fur)" stroke="#675b82" stroke-width="10" stroke-linejoin="round"/>
+<path d="M115 113 89 48l65 53zM297 104l48-56-14 66z" fill="#f7abc2"/>
+<!-- fluffy torso -->
+<path d="M151 336Q106 341 98 410Q94 454 145 456l130 0q56-4 47-59c-4-29-24-52-60-59z" fill="url(#dress)" stroke="#665382" stroke-width="9"/>
+<!-- paws and slippers -->
+<ellipse cx="161" cy="457" rx="51" ry="27" fill="#b6aaca" stroke="#695c84" stroke-width="8"/>
+<ellipse cx="262" cy="457" rx="51" ry="27" fill="#b6aaca" stroke="#695c84" stroke-width="8"/>
+<path d="M134 398q-27-2-34 19 7 24 29 24l33-13" fill="url(#fur)" stroke="#665b82" stroke-width="8" stroke-linecap="round"/>
+<path d="M290 398q32-4 38 18-5 29-38 21l-27-13" fill="url(#fur)" stroke="#665b82" stroke-width="8" stroke-linecap="round"/>
+<!-- head -->
+<path d="M203 93C116 76 57 132 63 234c4 89 66 146 148 145 88-1 151-57 148-144-4-89-56-149-156-142z" fill="url(#fur)" stroke="#695f86" stroke-width="10"/>
+<!-- cheeks and white muzzle -->
+<path d="M90 258c10 31 31 45 54 47 16 41 42 57 68 59 36 2 67-23 85-60 21-3 40-22 46-47-25-5-39 14-57 19-17-38-41-46-73-43-36-5-60 17-76 43-21-8-31-18-47-18z" fill="url(#belly)"/>
+<!-- rosy cheeks -->
+<ellipse cx="119" cy="262" rx="25" ry="15" fill="#ee99b1" opacity=".7"/>
+<ellipse cx="304" cy="262" rx="25" ry="15" fill="#ee99b1" opacity=".7"/>
+<!-- eyes whites -->
+<ellipse cx="159" cy="217" rx="28" ry="36" fill="#fff"/>
+<ellipse cx="268" cy="217" rx="28" ry="36" fill="#fff"/>
+<ellipse cx="166" cy="223" rx="14" ry="24" fill="#453d5c"/>
+<ellipse cx="264" cy="223" rx="14" ry="24" fill="#453d5c"/>
+<ellipse cx="172" cy="211" rx="6" ry="8" fill="#fff"/>
+<ellipse cx="270" cy="211" rx="6" ry="8" fill="#fff"/>
+<!-- nose + smile -->
+<path d="M192 269q21-16 43 0-7 25-21 26-17 0-22-26z" fill="#58435c"/>
+<path d="M214 293q-3 28-31 20m31-20q6 27 31 19" fill="none" stroke="#72506a" stroke-width="6" stroke-linecap="round"/>
+<!-- bow -->
+<path d="M294 121c-28-19-36-5-30 17l31 17q-4 22 22 22l28-24q23-35-3-39l-24 20z" fill="#ffcd68" stroke="#b57d60" stroke-width="5"/>
+<circle cx="312" cy="143" r="13" fill="#ffb764" stroke="#b57d60" stroke-width="4"/>
+<!-- shirt star -->
+<path d="m215 371 11 21 25 4-18 16 4 25-22-12-22 12 4-25-18-16 25-4z" fill="#ffe488" stroke="#f9c665" stroke-width="3"/>
+<!-- floating sparkles -->
+<path d="m57 165 5 15 15 5-15 5-5 15-5-15-15-5 15-5z" fill="#fff2a0"/>
+<path d="m353 197 5 11 11 5-11 5-5 11-5-11-11-5 11-5z" fill="#fff2a0"/>
+<circle cx="355" cy="298" r="7" fill="#fff2a0"/>
+</svg>

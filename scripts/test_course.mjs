@@ -67,17 +67,27 @@ function fakeElement(dataset={}){
  return {dataset,disabled:false,textContent:'',_html:'',events:{},classList:{toggle(){},add(){}},
   addEventListener(kind,fn){this.events[kind]=fn;},
   click(){if(this.events.click)this.events.click({target:this});},
-  set innerHTML(x){this._html=x;this.nodes=new Map();},
+  trigger(type){if(this.events[type])this.events[type]({target:this});},
+  set innerHTML(x){this._html=x;this.nodes=new Map();this.selectors=new Map();},
   get innerHTML(){return this._html;},
   querySelector(sel){
    this.nodes??=new Map();
    if(!this.nodes.has(sel))this.nodes.set(sel,fakeElement());
    return this.nodes.get(sel);
   },
-  querySelectorAll(){return [];}
+  querySelectorAll(sel){
+    if(!/^\[data-/.test(sel))return [];
+    this.selectors??=new Map();
+    if(!this.selectors.has(sel)){
+      const key=sel.slice(6,-1),camel=key.replace(/-([a-z])/g,(_,c)=>c.toUpperCase());
+      const pattern=new RegExp('data-'+key+'="([^"]+)"','g');
+      this.selectors.set(sel,[...this.innerHTML.matchAll(pattern)].map(x=>fakeElement({[camel]:x[1]})));
+    }
+    return this.selectors.get(sel);
+  }
  };
 }
-const buttons=['home','play','review','family'].map(tab=>fakeElement({tab}));
+const buttons=['home','play','stories','rewards'].map(tab=>fakeElement({tab}));
 const elem=new Map();
 const get=id=>{if(!elem.has(id))elem.set(id,fakeElement());return elem.get(id);};
 const view=fakeElement();
@@ -99,7 +109,8 @@ view.querySelectorAll=function(sel){
  }
  return this.dataNodes.get(sel);
 };
-const doc={getElementById(id){return id==='view'?view:get(id);},
+const root={dataset:{},style:{setProperty(key,value){this[key]=value;},removeProperty(key){delete this[key];}}};
+const doc={documentElement:root,addEventListener(){},getElementById(id){return id==='view'?view:get(id);},
  querySelectorAll(sel){return sel==='.bottom button'?buttons:[];}};
 let storage=null;
 const localStorage={getItem:()=>storage,setItem:(_,x)=>{storage=x;}};
@@ -108,7 +119,36 @@ vm.runInNewContext(read('app.js'),{
  setTimeout(){return 0;},confirm(){return true;},SpeechSynthesisUtterance:function(){}
 },{filename:'app.js'});
 
-assert.match(view.innerHTML,/Привет, исследователь/);
+assert.match(view.innerHTML,/Привет,<br>солнышко!/);
+assert.equal(root.dataset.theme,'lilac','storybook theme booted');
+assert.match(read('index.html'),/theme-open/);
+assert.match(read('index.html'),/theme-overlay/);
+get('theme-open').click();
+assert.match(get('theme-overlay').innerHTML,/Сиреневое чудо/);
+const mint=get('theme-overlay').querySelectorAll('[data-palette]').find(b=>b.dataset.palette==='mint');
+assert.ok(mint,'mint selectable');
+mint.click();
+assert.equal(root.dataset.theme,'mint','theme visibly changes');
+assert.equal(JSON.parse(storage).theme,'mint','theme saved locally');
+const mainColor=get('theme-overlay').querySelector('#custom-main');
+const magicColor=get('theme-overlay').querySelector('#custom-accent');
+mainColor.value='#34618f';magicColor.value='#f3c277';
+mainColor.trigger('input');
+assert.equal(root.dataset.theme,'custom','custom theme activated');
+assert.equal(root.style['--ui-primary'],'#34618f');
+assert.equal(JSON.parse(storage).customAccent,'#f3c277');
+get('theme-overlay').querySelector('#theme-close').click();
+assert.equal(get('theme-overlay').hidden,true);
+get('family-open').click();
+assert.match(view.innerHTML,/Только для взрослых/);
+assert.doesNotMatch(view.innerHTML,/id="reset-progress"/,'progress deletion unavailable without parent check');
+const gate=view.innerHTML.match(/Сколько будет (\d+) \+ (\d+)\?/);
+assert.ok(gate,'adult multiplication? addition challenge present');
+view.querySelector('#parent-answer').value=String(Number(gate[1])+Number(gate[2]));
+view.querySelector('#parent-check').click();
+assert.match(view.innerHTML,/id="reset-progress"/);
+view.querySelector('#family-back').click();
+assert.match(view.innerHTML,/Твой следующий шаг/);
 assert.match(view.innerHTML,/Карта приключений/);
 assert.match(view.innerHTML,/Приключения Волчонка/);
 assert.match(view.innerHTML,/Картинки/);
@@ -129,6 +169,10 @@ assert.match(view.innerHTML,/Карта приключений/);
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
 assert.equal((view.innerHTML.match(/data-start="/g)||[]).length,300,'300 session buttons rendered');
 assert.match(view.innerHTML,/day-num/);
+assert.match(view.innerHTML,/data-hop="0"/,'current steps must be visible');
+assert.match(read('index.html'),/storybook.css/);
+assert.match(read('index.html'),/wolfie.svg/);
+assert.match(read('index.html'),/data-tab="rewards"/);
 
 // End-to-end DOM-light UI smoke: first lesson, 10 correct choices, completion unlocks next day.
 view.querySelector('#continue').click();
@@ -208,4 +252,12 @@ view.querySelector('#begin-memory').click();
 assert.equal(view.querySelectorAll('[data-memory-card]').length,10);
 view.querySelector('#memory-exit').click();
 assert.match(view.innerHTML,/Мастер памяти/);
+buttons[3].click();
+assert.match(view.innerHTML,/Мой волшебный сад/);
+const firstSticker=view.querySelectorAll('[data-sticker]').find(b=>b.dataset.sticker==='👣');
+assert.ok(firstSticker,'first lesson unlocks a sticker');
+firstSticker.click();
+view.querySelectorAll('[data-garden-slot]')[0].click();
+assert.equal(JSON.parse(storage).garden[0],'👣','chosen sticker saved into first garden slot');
+assert.equal(JSON.parse(storage).theme,'custom','theme remains after session changes');
 console.log('PASS: 300 lessons, 15 stories/45 Q, 10 dialogues/30 replies, full story + dialogue + picture flows and memory cards');
