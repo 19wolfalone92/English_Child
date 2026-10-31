@@ -1,0 +1,58 @@
+/* EVA STUDIO — offline illustrated village and no-timer listening adventures. */
+.magic-map{margin:14px 0 17px;background:linear-gradient(130deg,var(--ui-soft),var(--ui-paper));border:2px solid var(--ui-border);border-radius:28px;overflow:hidden;box-shadow:0 9px 24px var(--ui-softglow)}
+.magic-map-title{padding:18px 16px 0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.magic-map-title h2{margin:0;color:var(--ui-deep)}
+.magic-map-scene{position:relative;min-height:270px;background:url('eva-valley.svg') center/cover no-repeat;overflow:hidden}
+.magic-map-scene::after{content:'';position:absolute;inset:70% 0 0;background:linear-gradient(transparent,#194f2926);pointer-events:none}
+.map-bubble{position:absolute;display:flex;align-items:center;gap:6px;flex-direction:column;justify-content:center;border:3px solid #fff;background:var(--ui-paper);color:var(--ui-deep);box-shadow:0 5px 15px #39265d55;border-radius:21px;padding:8px 10px;font-size:13px;font-weight:950;min-width:83px;min-height:81px;text-align:center;z-index:2;line-height:1.08}
+.map-bubble .map-emoji{font-size:29px;line-height:1}
+.map-bubble.lesson{left:34%;top:8%;background:var(--ui-highlight)}
+.map-bubble.listening{left:4%;top:38%;background:var(--ui-soft)}
+.map-bubble.stories{right:3%;top:41%;background:var(--ui-sky)}
+.map-bubble.garden{left:39%;bottom:5%;background:var(--ui-garden)}
+.map-bubble:active{transform:translateY(2px)}
+.map-bubble:focus-visible{outline:4px solid var(--ui-deep);outline-offset:3px}
+.magic-map-footer{font-size:13px;line-height:1.35;color:var(--ui-deep);margin:0;padding:12px 14px 14px;background:var(--ui-paper)}
+.sound-worlds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:15px 0}
+.sound-world{min-height:153px;text-align:center;display:flex;align-items:center;justify-content:space-between;flex-direction:column;gap:4px;padding:15px 9px;background:linear-gradient(150deg,var(--ui-soft),var(--ui-paper));border:2px solid var(--ui-border);border-radius:23px;color:var(--ui-ink)}
+.sound-world:nth-child(4n+2){background:linear-gradient(160deg,var(--ui-highlight),var(--ui-paper))}
+.sound-world:nth-child(4n+3){background:linear-gradient(160deg,var(--ui-sky),var(--ui-paper))}
+.sound-world:nth-child(4n+4){background:linear-gradient(160deg,var(--ui-garden),var(--ui-paper))}
+.sound-world .sound-world-icon{font-size:43px;line-height:1.1}
+.sound-world b{font-size:16px;color:var(--ui-deep)}
+.sound-world small{font-size:12px;line-height:1.3}
+.sound-progress{font-size:12px;font-weight:900;background:var(--ui-paper);padding:5px 10px;border-radius:99px;color:var(--ui-deep)}
+.sound-question{text-align:center}
+.sound-question h1{font-size:clamp(22px,6vw,29px);color:var(--ui-deep)}
+.sound-portrait{font-size:45px;margin-bottom:5px;line-height:1.2}
+.sound-mega{width:100%;border:3px solid var(--ui-border);background:var(--ui-soft);border-radius:26px;color:var(--ui-deep);min-height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;margin:14px 0 19px}
+.sound-mega span{font-size:55px}.sound-mega small{font-weight:900;font-size:14px}
+.sound-mega:active{transform:scale(.98)}
+.sound-fallback{background:var(--ui-soft);padding:18px 12px;margin:15px 0;border-radius:21px}
+.sound-fallback b{font-size:27px;display:block;color:var(--ui-deep)}
+.sound-fallback small{display:block;margin-top:8px;font-size:13px}
+.sound-pictures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sound-pictures:has(.sound-pick:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+.sound-pick{min-width:0;min-height:141px;padding:12px 4px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:var(--ui-paper);border:3px solid var(--ui-border);border-radius:22px;color:var(--ui-ink)}
+.sound-pick span{font-size:clamp(39px,10vw,60px);line-height:1.1}
+.sound-pick b{font-size:clamp(12px,3.5vw,17px);overflow-wrap:anywhere}
+.sound-pick.good{background:#def9ed;border-color:#3b9b73;color:#205b42;opacity:1}
+.sound-pick.bad{background:#fff0f0;border-color:#d78d9c;opacity:1}
+.sound-pick:disabled{opacity:1}
+.sound-finish{text-align:center;font-size:40px;margin:13px}
+@media(max-width:365px){
+ .magic-map-scene{min-height:235px}
+ .map-bubble{min-width:70px;min-height:71px;font-size:11px;padding:5px}
+ .map-bubble .map-emoji{font-size:25px}
+ .map-bubble.lesson{left:35%}
+ .map-bubble.garden{left:37%}
+ .sound-world{min-height:147px}
+ .sound-pick{min-height:116px}
+ .sound-pick b{font-size:12px}
+}
+@media(min-width:580px){
+ .magic-map-scene{min-height:380px}
+ .sound-worlds{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .sound-pick{min-height:160px}
+}
+@media(prefers-reduced-motion:reduce){.map-bubble:active,.sound-mega:active{transform:none}}
