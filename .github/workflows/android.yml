@@ -1,4 +1,4 @@
-name: Wolfie Kids Android APK
+name: Eva English Kids Android APK
 on:
   push:
     branches: [main, 'feature/**']
@@ -34,6 +34,6 @@ jobs:
         run: gradle --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: Wolfie-Kids-v0.3.0-debug
+          name: Eva-English-Kids-v0.4.0-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

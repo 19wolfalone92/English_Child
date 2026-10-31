@@ -5,6 +5,10 @@ import vm from 'node:vm';
 const assets=new URL('../app/src/main/assets/',import.meta.url);
 const read=(p)=>fs.readFileSync(new URL(p,assets),'utf8');
 const window={};
+vm.runInNewContext(read('identity.js'),{window},{filename:'identity.js'});
+assert.equal(window.KIDS_IDENTITY.name,'Ева');
+assert.equal(window.KIDS_IDENTITY.genitive,'Евы');
+assert.equal(window.KIDS_IDENTITY.englishName,'Eva');
 vm.runInNewContext(read('content.js'),{window},{filename:'content.js'});
 vm.runInNewContext(read('phonics.js'),{window},{filename:'phonics.js'});
 assert.equal(window.KIDS_ALPHABET.length,26,'full English alphabet');
@@ -55,6 +59,9 @@ for(const [index,m] of modules.entries()){
  }
 }
 assert.match(read('index.html'),/content.js/);
+assert.match(read('index.html'),/identity.js/);
+assert.ok(read('index.html').indexOf('identity.js')<read('index.html').indexOf('app.js'),'identity must load first');
+assert.match(read('index.html'),/brand-title/);
 assert.match(read('index.html'),/app.js/);
 assert.match(read('index.html'),/phonics.js/);
 for(const file of ['stories.js','dialogues.js','adventures.js','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
@@ -119,7 +126,10 @@ vm.runInNewContext(read('app.js'),{
  setTimeout(){return 0;},confirm(){return true;},SpeechSynthesisUtterance:function(){}
 },{filename:'app.js'});
 
-assert.match(view.innerHTML,/Привет,<br>солнышко!/);
+assert.match(view.innerHTML,/Привет,<br>Ева!/);
+assert.equal(get('brand-title').textContent,'Eva English Kids');
+assert.match(get('brand-subtitle').textContent,/Ева/);
+assert.match(doc.title,/Евы/);
 assert.equal(root.dataset.theme,'lilac','storybook theme booted');
 assert.match(read('index.html'),/theme-open/);
 assert.match(read('index.html'),/theme-overlay/);
@@ -147,25 +157,26 @@ assert.ok(gate,'adult multiplication? addition challenge present');
 view.querySelector('#parent-answer').value=String(Number(gate[1])+Number(gate[2]));
 view.querySelector('#parent-check').click();
 assert.match(view.innerHTML,/id="reset-progress"/);
+assert.match(view.innerHTML,/Прогресс Евы/);
 view.querySelector('#family-back').click();
-assert.match(view.innerHTML,/Твой следующий шаг/);
-assert.match(view.innerHTML,/Карта приключений/);
-assert.match(view.innerHTML,/Приключения Волчонка/);
+assert.match(view.innerHTML,/Следующий шаг Евы/);
+assert.match(view.innerHTML,/Карта Евы/);
+assert.match(view.innerHTML,/Ева и Вулфи/);
 assert.match(view.innerHTML,/Картинки/);
 view.querySelector('#stories-home').click();
-assert.match(view.innerHTML,/Сказки и тайны/);
+assert.match(view.innerHTML,/Сказки для Евы/);
 view.querySelector('#quest-back').click();
 view.querySelector('#dialogues-play').click();
-assert.match(view.innerHTML,/Говорим с героями/);
+assert.match(view.innerHTML,/Ева разговаривает с героями/);
 view.querySelector('#quest-back').click();
 view.querySelector('#memory-play').click();
-assert.match(view.innerHTML,/Мастер памяти/);
+assert.match(view.innerHTML,/Ева — мастер памяти/);
 view.querySelector('#memory-back').click();
 view.querySelector('#pictures-play').click();
-assert.match(view.innerHTML,/Угадай картинку/);
+assert.match(view.innerHTML,/Ева, угадай картинку/);
 view.querySelector('#pictures-exit').click();
 buttons[0].click();
-assert.match(view.innerHTML,/Карта приключений/);
+assert.match(view.innerHTML,/Карта Евы/);
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
 assert.equal((view.innerHTML.match(/data-start="/g)||[]).length,300,'300 session buttons rendered');
 assert.match(view.innerHTML,/day-num/);
@@ -187,6 +198,8 @@ for(const item of first){
  notice.querySelector('#next-question').click();
 }
 assert.match(view.innerHTML,/Следующий урок открыт/);
+assert.match(view.innerHTML,/Ева, получилось!/);
+assert.match(view.innerHTML,/Звёздный результат Евы!/);
 view.querySelector('#back-home').click();
 assert.match(view.innerHTML,/1\/300/);
 const persisted=JSON.parse(storage);
@@ -209,7 +222,7 @@ for(const question of window.KIDS_STORIES[0].questions){
  assert.match(view.querySelector('#quest-notice').innerHTML,/Верно/);
  view.querySelector('#quest-notice').querySelector('#quest-next').click();
 }
-assert.match(view.innerHTML,/История разгадана/);
+assert.match(view.innerHTML,/Ева, история разгадана/);
 assert.equal(JSON.parse(storage).storyScores['story-01'].best,3);
 assert.equal(JSON.parse(storage).xp,115);
 view.querySelector('#quest-list').click();
@@ -225,7 +238,7 @@ for(const step of window.KIDS_DIALOGUES[0].steps){
  assert.match(view.querySelector('#dialogue-notice').innerHTML,/Здорово/);
  view.querySelector('#dialogue-next').click();
 }
-assert.match(view.innerHTML,/Разговор завершён/);
+assert.match(view.innerHTML,/Ева, разговор завершён/);
 assert.equal(JSON.parse(storage).dialogueScores['dialogue-01'].best,3);
 assert.equal(JSON.parse(storage).xp,130);
 view.querySelector('#dialogue-list').click();
@@ -242,7 +255,7 @@ for(let n=0;n<8;n++){
  assert.match(view.querySelector('#picture-feedback').innerHTML,/Ты нашёл/);
  view.querySelector('#picture-next').click();
 }
-assert.match(view.innerHTML,/Художник-исследователь/);
+assert.match(view.innerHTML,/Ева, ты художница-исследователь/);
 assert.equal(JSON.parse(storage).xp,140);
 // Memory game presents ten cards; child can leave without a penalty.
 view.querySelector('#pictures-done').click();
@@ -251,9 +264,9 @@ view.querySelector('#memory-play').click();
 view.querySelector('#begin-memory').click();
 assert.equal(view.querySelectorAll('[data-memory-card]').length,10);
 view.querySelector('#memory-exit').click();
-assert.match(view.innerHTML,/Мастер памяти/);
+assert.match(view.innerHTML,/Ева — мастер памяти/);
 buttons[3].click();
-assert.match(view.innerHTML,/Мой волшебный сад/);
+assert.match(view.innerHTML,/Волшебный сад Евы/);
 const firstSticker=view.querySelectorAll('[data-sticker]').find(b=>b.dataset.sticker==='👣');
 assert.ok(firstSticker,'first lesson unlocks a sticker');
 firstSticker.click();
