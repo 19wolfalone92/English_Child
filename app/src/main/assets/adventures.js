@@ -18,13 +18,14 @@ function day(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1)
 function title(icon,name,description){return `<section class="hero"><div class="hero-emoji">${icon}</div><div class="eyebrow">КЛУБ ВОЛЧОНКА</div><h1>${esc(name)}</h1><p>${esc(description)}</p></section>`;}
 function back(id,callback){const b=ctx.view.querySelector(id);if(b)b.addEventListener('click',callback);}
 function chooseLevel(kind,level){
+ if(!ctx.state.advancedContent&&['B1','B2'].includes(level))return;
  ctx.state.level=level;ctx.save();
  if(kind==='story')openStories(ctx);
  if(kind==='dialogue')openDialogues(ctx);
  if(kind==='memory')openMemory(ctx);
 }
 function levelRow(kind){
- const levels=['Pre-A1','A1','A2','B1','B2'];
+ const levels=ctx.state.advancedContent?['Pre-A1','A1','A2','B1','B2']:['Pre-A1','A1','A2'];
  return `<div class="level-buttons quest-level">${levels.map(l=>`<button type="button" class="level-button ${ctx.state.level===l?'active':''}" data-quest-level="${esc(l)}">${esc(l)}</button>`).join('')}</div>`;
 }
 function bindLevel(kind){
@@ -32,7 +33,7 @@ function bindLevel(kind){
 }
 function openStories(api){
  ctx=api;current=null;
- const level=api.state.level||'Pre-A1';
+ const level=!api.state.advancedContent&&['B1','B2'].includes(api.state.level)?'Pre-A1':api.state.level||'Pre-A1';
  const list=stories.filter(x=>x.level===level);
  let html=title('📚','Сказки для '+childGenitive(),childName()+', послушай интересную историю, а потом ответь на вопросы!');
  html+=`<section class="feature"><h2>Выбери ступень</h2>${levelRow('story')}<div class="quest-grid">`;
@@ -88,7 +89,7 @@ function storyEnd(){
 }
 function openDialogues(api){
  ctx=api;current=null;
- const level=api.state.level||'Pre-A1';
+ const level=!api.state.advancedContent&&['B1','B2'].includes(api.state.level)?'Pre-A1':api.state.level||'Pre-A1';
  const list=dialogues.filter(x=>x.level===level);
  let html=title('🗣️',childName()+' разговаривает с героями','Помоги герою подобрать ответ и повтори его вслух!');
  html+=`<section class="feature"><h2>Выбери ступень</h2>${levelRow('dialogue')}<div class="quest-grid">`;
