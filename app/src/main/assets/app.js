@@ -23,11 +23,11 @@ const cleanScores=x=>Object.fromEntries(Object.entries(safeRecord(x))
 function recoverData(x){
  const r=fresh();
  if(!x || typeof x!=='object' || Array.isArray(x))return r;
- r.done=Object.fromEntries(Object.entries(safeRecord(x.done)).filter(([id,v])=>/^day-\\d{3}$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
+ r.done=Object.fromEntries(Object.entries(safeRecord(x.done)).filter(([id,v])=>/^day-\d{3}$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
   .map(([id,v])=>[id,{passed:v.passed===true,best:boundedNumber(v.best,10),attempts:boundedNumber(v.attempts)}]));
- r.items=Object.fromEntries(Object.entries(safeRecord(x.items)).filter(([id,v])=>/^kid-\\d{2}-\\d{2}$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
+ r.items=Object.fromEntries(Object.entries(safeRecord(x.items)).filter(([id,v])=>/^kid-\d{2}-\d{2}$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
   .map(([id,v])=>[id,{stage:boundedNumber(v.stage,5),seen:boundedNumber(v.seen),due:boundedNumber(v.due,9999999999999)}]));
- r.days=Object.fromEntries(Object.entries(safeRecord(x.days)).filter(([k])=>/^\\d{4}-\\d{2}-\\d{2}$/.test(k))
+ r.days=Object.fromEntries(Object.entries(safeRecord(x.days)).filter(([k])=>/^\d{4}-\d{2}-\d{2}$/.test(k))
   .map(([k,v])=>[k,boundedNumber(v)]));
  r.xp=boundedNumber(x.xp);r.answers=boundedNumber(x.answers);r.correct=Math.min(boundedNumber(x.correct),r.answers);
  r.level=levels.includes(x.level)?x.level:r.level;
@@ -37,7 +37,7 @@ function recoverData(x){
  }
  r.storyScores=cleanScores(x.storyScores);
  r.dialogueScores=cleanScores(x.dialogueScores);
- r.pictureWins=Object.fromEntries(Object.entries(safeRecord(x.pictureWins)).filter(([key])=>/^\\d{4}-\\d{2}-\\d{2}$/.test(key))
+ r.pictureWins=Object.fromEntries(Object.entries(safeRecord(x.pictureWins)).filter(([key])=>/^\d{4}-\d{2}-\d{2}$/.test(key))
   .map(([key,v])=>[key,boundedNumber(v,8)]));
  r.gameWins=Object.fromEntries(Object.entries(safeRecord(x.gameWins)).filter(([key])=>key.length<60)
   .map(([key,v])=>[key,boundedNumber(v)]));
