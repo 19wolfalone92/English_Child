@@ -76,7 +76,7 @@ assert.ok(read('index.html').indexOf('identity.js')<read('index.html').indexOf('
 assert.match(read('index.html'),/brand-title/);
 assert.match(read('index.html'),/app.js/);
 assert.match(read('index.html'),/phonics.js/);
-for(const file of ['stories.js','dialogues.js','adventures.js','soundgarden.js','magic-world.css','eva-valley.svg','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
+for(const file of ['stories.js','dialogues.js','adventures.js','soundgarden.js','magic-world.css','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
 assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote resources');
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
@@ -208,6 +208,8 @@ assert.match(view.innerHTML,/day-num/);
 assert.match(view.innerHTML,/data-hop="0"/,'current steps must be visible');
 assert.match(read('index.html'),/storybook.css/);
 assert.match(read('index.html'),/wolfie.svg/);
+assert.match(read('magic-world.css'),/eva-valley\\.svg/,'scene bundled in CSS');
+assert.match(read('app.js'),/world-sound/,'scene hotspots wired');
 assert.match(read('index.html'),/data-tab="rewards"/);
 
 // End-to-end DOM-light UI smoke: first lesson, 10 correct choices, completion unlocks next day.
