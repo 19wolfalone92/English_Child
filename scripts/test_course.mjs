@@ -9,6 +9,33 @@ vm.runInNewContext(read('content.js'),{window},{filename:'content.js'});
 vm.runInNewContext(read('phonics.js'),{window},{filename:'phonics.js'});
 assert.equal(window.KIDS_ALPHABET.length,26,'full English alphabet');
 assert.equal(window.KIDS_ALPHABET.map(x=>x.letter).join(''),'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+vm.runInNewContext(read('stories.js'),{window},{filename:'stories.js'});
+vm.runInNewContext(read('dialogues.js'),{window},{filename:'dialogues.js'});
+vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{filename:'adventures.js'});
+assert.equal(window.KIDS_STORIES.length,15,'15 authored original readers');
+assert.equal(window.KIDS_DIALOGUES.length,10,'10 scripted speaking tasks');
+for(const level of ['Pre-A1','A1','A2','B1','B2']){
+ assert.equal(window.KIDS_STORIES.filter(x=>x.level===level).length,3,'three graded stories: '+level);
+ assert.equal(window.KIDS_DIALOGUES.filter(x=>x.level===level).length,2,'two dialogues: '+level);
+}
+for(const story of window.KIDS_STORIES){
+ assert.ok(story.text.length>120,story.id+' has enough narrative');
+ assert.equal(story.questions.length,3,story.id);
+ for(const q of story.questions){
+  assert.equal(q.options.length,4,q.id);
+  assert.ok(Number.isInteger(q.correct) && q.correct>=0 && q.correct<4,q.id);
+  assert.equal(new Set(q.options).size,4,'non-identical distractors: '+q.id);
+  assert.ok(q.explain.length>12,q.id+' must explain the answer');
+ }
+}
+for(const dialogue of window.KIDS_DIALOGUES){
+ assert.equal(dialogue.steps.length,3,dialogue.id);
+ for(const step of dialogue.steps){
+  assert.equal(step.options.length,4,dialogue.id);
+  assert.ok(step.correct>=0 && step.correct<4);
+  assert.equal(new Set(step.options).size,4);
+ }
+}
 const modules=window.KIDS_MODULES;
 assert.equal(modules.length,30,'30 curated themed modules');
 const levels=['Pre-A1','A1','A2','B1','B2'];
@@ -30,6 +57,7 @@ for(const [index,m] of modules.entries()){
 assert.match(read('index.html'),/content.js/);
 assert.match(read('index.html'),/app.js/);
 assert.match(read('index.html'),/phonics.js/);
+for(const file of ['stories.js','dialogues.js','adventures.js','extras.css'])assert.ok(read('index.html').includes(file),'asset linked: '+file);
 assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote resources');
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
@@ -70,6 +98,16 @@ vm.runInNewContext(read('app.js'),{
 
 assert.match(view.innerHTML,/Привет, исследователь/);
 assert.match(view.innerHTML,/Карта приключений/);
+assert.match(view.innerHTML,/Приключения Волчонка/);
+view.querySelector('#stories-home').click();
+assert.match(view.innerHTML,/Сказки и тайны/);
+view.querySelector('#quest-back').click();
+view.querySelector('#dialogues-home').click();
+assert.match(view.innerHTML,/Говорим с героями/);
+view.querySelector('#quest-back').click();
+view.querySelector('#memory-home').click();
+assert.match(view.innerHTML,/Мастер памяти/);
+view.querySelector('#memory-back').click();
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
 assert.equal((view.innerHTML.match(/data-start="/g)||[]).length,300,'300 session buttons rendered');
 assert.match(view.innerHTML,/day-num/);
@@ -95,4 +133,4 @@ assert.equal(persisted.done['day-001'].best,10);
 assert.equal(persisted.correct,10);
 assert.equal(persisted.items[first[0].id].stage,1);
 assert.equal(persisted.xp,100);
-console.log('PASS: 30 themes; 300 authentic bilingual pairs; 300 sessions; first course session unlocks correctly');
+console.log('PASS: 300 sessions, 15 stories/45 questions, 10 dialogues/30 turns, memory game, offline UI and first lesson');
