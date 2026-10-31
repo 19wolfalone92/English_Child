@@ -63,6 +63,12 @@ function setNav(selected){
 function topHero(icon,title,text){
  return `<section class="hero"><div class="hero-emoji" aria-hidden="true">${icon}</div><div class="eyebrow">WOLFIE KIDS · ENGLISH ADVENTURE</div><h1>${esc(title)}</h1><p>${esc(text)}</p></section>`;
 }
+function launchExtra(kind){
+ session=null;setNav('play');
+ const extras=window.KIDS_ADVENTURES;
+ if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
+ extras[kind]({view,state,save,speak,speakAvailable,onExit:renderPlay});
+}
 function renderHome(){
  session=null;setNav('home');
  const next=nextLesson();
@@ -85,6 +91,9 @@ function renderHome(){
  html+='</section>';
  view.innerHTML=html;
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
+ view.querySelector('#stories-home')?.addEventListener('click',()=>launchExtra('openStories'));
+ view.querySelector('#dialogues-home')?.addEventListener('click',()=>launchExtra('openDialogues'));
+ view.querySelector('#memory-home')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
  view.querySelectorAll('[data-start]').forEach(b=>b.addEventListener('click',()=>start(Number(b.dataset.start))));
 }
@@ -106,6 +115,7 @@ function renderPlay(){
  let html=topHero('🎮','Играй и учись','Выбери любую тему. Свободная тренировка не влияет на порядок уроков курса.');
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Буквы A–Z</h2><p>26 букв, слова и произношение.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
  html+='<div class="feature"><h2>Выбери уровень</h2><div class="level-buttons">'+levels.map(level=>`<button class="level-button ${state.level===level?'active':''}" data-level="${level}">${level}</button>`).join('')+'</div></div>';
+ html+='<section class="feature"><h2>🌟 Выбери приключение</h2><div class="quest-shortcuts"><button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читай по смыслу</small></button><button class="quest-shortcut" id="dialogues-play"><span>🗣️</span><b>Диалоги</b><small>Учись общаться</small></button><button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Без таймера</small></button></div></section>';
  html+='<section class="feature"><h2>Игры и тренировки</h2><div class="play-grid">';
  for(const [i,m] of modules.entries()){
   if(m.level!==state.level)continue;
@@ -114,6 +124,9 @@ function renderPlay(){
  html+='</div></section>';
  view.innerHTML=html;
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
+ view.querySelector('#stories-play')?.addEventListener('click',()=>launchExtra('openStories'));
+ view.querySelector('#dialogues-play')?.addEventListener('click',()=>launchExtra('openDialogues'));
+ view.querySelector('#memory-play')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{state.level=b.dataset.level;save();renderPlay();}));
  view.querySelectorAll('[data-free]').forEach(b=>b.addEventListener('click',()=>startFree(Number(b.dataset.free))));
 }
@@ -132,8 +145,10 @@ function renderReview(){
 function renderFamily(){
  session=null;setNav('family');
  const count=passedCount(),accuracy=state.answers?Math.round((state.correct||0)/state.answers*100):0;
+ const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
+ const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Родителям','Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
+ `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();renderFamily();}});
 }
 function buildKinds(index,level){
@@ -269,7 +284,7 @@ function endSession(){
  session=null;setNav(s.kind==='course'?'home':s.kind==='review'?'review':'play');
  const result=passedToday?'🏆':'🌈';
  view.innerHTML=topHero(result,passedToday?'У тебя получилось!':'Каждая попытка важна!',`Верных ответов: ${correct} из ${s.items.length}.`)+
- `<section class="feature"><h2>${passedToday?'Звёздный результат!':'Можно попробовать ещё раз'}</h2><p>${s.kind==='course'?(passedToday?'Следующий урок открыт!':'Для открытия следующего урока нужно минимум 7 ответов из 10.'): 'Ты можешь повторить тему в любое время.'}</p><p>🎤 ${esc(s.module.mission)}</p><p class="muted">Творческую устную и письменную работу программа не оценивает. Попроси взрослого послушать твой рассказ.</p><button class="primary" id="back-home">${s.kind==='course'?'Вернуться к курсу':'К тренировкам'}</button>${s.kind==='course'&&!passedToday?'<button class="secondary full" id="retry-day">↺ Повторить урок</button>':''}</section>`;
+ `<section class="feature"><h2>${passedToday?'Звёздный результат!':'Можно попробовать ещё раз'}</h2><p>${s.kind==='course'?(passedToday?'Следующий урок открыт!':'Для открытия следующего урока нужно минимум 7 ответов из 10.'): 'Ты можешь повторить тему в любое время.'}</p><p>🎤 ${esc(s.module.mission)}</p><p class="muted">🌿 После одного занятия полезно сделать перерыв, потянуться и посмотреть вдаль.</p><p class="muted">Творческую устную и письменную работу программа не оценивает. Попроси взрослого послушать твой рассказ.</p><button class="primary" id="back-home">${s.kind==='course'?'Вернуться к курсу':'К тренировкам'}</button>${s.kind==='course'&&!passedToday?'<button class="secondary full" id="retry-day">↺ Повторить урок</button>':''}</section>`;
  view.querySelector('#back-home').addEventListener('click',()=>s.kind==='course'?renderHome():s.kind==='review'?renderReview():renderPlay());
  view.querySelector('#retry-day')?.addEventListener('click',()=>start(s.lesson.index));
 }
