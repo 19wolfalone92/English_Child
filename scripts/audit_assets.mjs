@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../app/src/main/assets');
+const file=(n)=>fs.readFileSync(path.join(base,n),'utf8');
+const index=file('index.html');
+const javascript=[...index.matchAll(/<script\s+src="([^"]+)"/g)].map(x=>x[1]);
+const styles=[...index.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(x=>x[1]);
+assert.ok(javascript.includes('identity.js')&&javascript.includes('soundgarden.js')&&javascript.at(-1)==='app.js');
+assert.ok(styles.includes('magic-world.css')&&styles.includes('storybook.css'));
+for(const ref of [...javascript,...styles]){
+ assert.ok(!ref.includes('..')&&!ref.includes('/')&&!ref.includes(':'),'unexpected resource path '+ref);
+ assert.ok(fs.existsSync(path.join(base,ref)),'missing local asset '+ref);
+}
+for(const cssName of styles){
+ const css=file(cssName);
+ for(const match of css.matchAll(/url\((["']?)([^"')]+)\1\)/g)){
+  const ref=match[2];
+  if(ref.startsWith('data:'))continue;
+  assert.ok(!ref.startsWith('https:')&&!ref.startsWith('http:'),'remote CSS asset '+ref);
+  assert.ok(!ref.includes('..')&&!ref.startsWith('/'),'out-of-package CSS resource '+ref);
+  assert.ok(fs.existsSync(path.join(base,ref)),'CSS file missing '+ref);
+ }
+}
+const scene=file('eva-valley.svg'),character=file('wolfie.svg');
+for(const [name,svg] of [['landscape',scene],['character',character]]){
+ assert.match(svg,/<svg\s[^>]*viewBox=/,'scalable SVG '+name);
+ assert.doesNotMatch(svg,/<script\b|<foreignObject\b|onload=|href=["']https?:|<image\b/i,'no remote or executable SVG content '+name);
+ assert.match(svg,/<title/,'descriptive illustration title '+name);
+}
+const jsContent=javascript.map(file).join('\n');
+assert.doesNotMatch(jsContent,/\bfetch\s*\(|new\s+XMLHttpRequest|new\s+WebSocket|navigator\.sendBeacon/,'no networking code in child application');
+const manifest=fs.readFileSync(path.join(base,'../AndroidManifest.xml'),'utf8');
+assert.match(manifest,/android:allowBackup="false"/);
+assert.doesNotMatch(manifest,/android\.permission\./,'child app needs no permissions');
+console.log('PASS: '+javascript.length+' scripts, '+styles.length+' styles, 2 original safe SVG illustrations; local-only assets and no Android permissions');
