@@ -327,7 +327,40 @@ vm.runInNewContext(read('app.js'),{
  setTimeout(){return 0;},confirm(){return true;},alert(){},
  SpeechSynthesisUtterance:function(){}
 },{filename:'complete-curriculum.js'});
-for(let dayIndex=0;dayIndex<300;dayIndex++){
+// A lesson interrupted by phone rotation or Android Back resumes at the next unanswered question.
+view.querySelector('#continue').click();
+for(let q=0;q<2;q++){
+ const item=modules[0].items[q+1];
+ const correct=view.options.find(b=>b.dataset.answer===item.id);
+ assert.ok(correct,'first checkpoint question exists');
+ correct.click();
+ view.querySelector('#feedback').querySelector('#next-question').click();
+}
+assert.equal(JSON.parse(storage).activeCourse.index,2);
+assert.equal(JSON.parse(storage).activeCourse.correct,2);
+view.querySelector('#leave').click();
+assert.match(view.innerHTML,/Продолжить занятие/);
+vm.runInNewContext(read('app.js'),{
+ window,document:doc,localStorage,console,Date,Math,
+ setTimeout(){return 0;},confirm(){return true;},alert(){},
+ SpeechSynthesisUtterance:function(){}
+},{filename:'resume-checkpoint.js'});
+assert.match(view.innerHTML,/Продолжить занятие/,'Android rotation or restart keeps pending lesson');
+view.querySelector('#continue').click();
+for(let q=2;q<10;q++){
+ const item=modules[0].items[(q+1)%10];
+ const correct=view.options.find(b=>b.dataset.answer===item.id);
+ assert.ok(correct,'remaining checkpoint answer '+q);
+ correct.click();
+ view.querySelector('#feedback').querySelector('#next-question').click();
+}
+assert.match(view.innerHTML,/Следующий урок открыт/);
+view.querySelector('#back-home').click();
+assert.equal(JSON.parse(storage).done['day-001'].passed,true);
+assert.ok(!JSON.parse(storage).activeCourse,'checkpoint cleaned after completion');
+assert.equal(JSON.parse(storage).answers,10,'no duplicate answers after resuming');
+
+for(let dayIndex=1;dayIndex<300;dayIndex++){
  assert.ok(view.innerHTML.includes('id="continue"'),'next lesson reachable: '+dayIndex);
  view.querySelector('#continue').click();
  const module=modules[Math.floor(dayIndex/10)];
@@ -358,4 +391,4 @@ assert.equal(Object.keys(full.done).length,300);
 assert.ok(Object.values(full.done).every(v=>v.passed),'no hidden locked lessons');
 assert.equal(full.answers,3000);
 assert.equal(full.correct,3000);
-console.log('PASS: 300/300 lessons completed, backup UI, safe corruption recovery, Android Back and full child activity suite.');
+console.log('PASS: 300/300 lessons completed, checkpoint recovery, backup UI, safe corruption recovery, Android Back and full child activity suite.');
