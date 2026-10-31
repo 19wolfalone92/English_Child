@@ -96,7 +96,12 @@ public final class MainActivity extends Activity {
                 JSONObject backup = new JSONObject();
                 backup.put("format", "eva-english-kids");
                 backup.put("version", 1);
-                backup.put("progress", new JSONObject(progress));
+                JSONObject dataObject = new JSONObject(progress);
+                // A new installation has no saved keys yet: still export a valid empty backup.
+                if(dataObject.optJSONObject("done") == null) dataObject.put("done", new JSONObject());
+                if(dataObject.optJSONObject("items") == null) dataObject.put("items", new JSONObject());
+                if(dataObject.optJSONObject("days") == null) dataObject.put("days", new JSONObject());
+                backup.put("progress", dataObject);
                 byte[] bytes = backup.toString(2).getBytes(StandardCharsets.UTF_8);
                 if(bytes.length > LIMIT) throw new IllegalArgumentException("Слишком большой файл");
                 try(OutputStream out = getContentResolver().openOutputStream(uri, "wt")) {
