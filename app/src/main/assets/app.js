@@ -86,7 +86,7 @@ function setNav(selected){
  document.getElementById('daily').textContent='🎯 '+Math.min(today(),10)+'/10';
 }
 function topHero(icon,title,text){
- return `<section class="hero"><div class="hero-emoji" aria-hidden="true">${icon}</div><div class="eyebrow">WOLFIE KIDS · ENGLISH ADVENTURE</div><h1>${esc(title)}</h1><p>${esc(text)}</p></section>`;
+ return `<section class="hero"><div class="hero-emoji" aria-hidden="true">${icon}</div><div class="eyebrow">✨ ИГРАЕМ И УЧИМСЯ</div><h1>${esc(title)}</h1><p>${esc(text)}</p></section>`;
 }
 function launchExtra(kind){
  session=null;setNav(kind==='openStories'?'stories':'play');
@@ -201,7 +201,7 @@ function renderHome(){
  const next=nextLesson(),doneCount=passedCount(),awards=achievements();
  const current=next?next.index:299;
  const startAt=Math.max(0,Math.min(current-2,lessons.length-6));
- let html=`<section class="hero home-welcome"><div class="welcome-copy"><div class="eyebrow">🐾 WOLFIE'S MAGIC WORLD</div><h1>Привет,<br>солнышко!</h1><p>Пойдём играть и открывать английский?</p></div><img class="wolfie-home" src="wolfie.svg" alt="Вулфи — добрый волчонок с бантиком"><span class="welcome-sparkle one">✨</span><span class="welcome-sparkle two">✦</span></section>`;
+ let html=`<section class="hero home-welcome"><div class="welcome-copy"><div class="eyebrow">✨ ПРИКЛЮЧЕНИЯ С ВУЛФИ</div><h1>Привет,<br>солнышко!</h1><p>Пойдём играть и открывать английский?</p></div><img class="wolfie-home" src="wolfie.svg" alt="Вулфи — добрый волчонок с бантиком"><span class="welcome-sparkle one">✨</span><span class="welcome-sparkle two">✦</span></section>`;
  html+=`<section class="home-stats"><div><strong>⭐ ${state.xp||0}</strong><span>звёздочки</span></div><div><strong>🌸 ${doneCount}</strong><span>уроков</span></div><div><strong>🏅 ${awards.filter(a=>a.earned).length}</strong><span>наклейки</span></div></section>`;
  html+=`<section class="feature home-start"><div class="section-lead"><h2>🌷 Твой следующий шаг</h2><span class="badge">${next?esc(modules[next.moduleIndex].level):'Ура! 🎉'}</span></div>`;
  if(next){
