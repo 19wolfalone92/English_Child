@@ -108,7 +108,7 @@ vm.runInNewContext(read('app.js'),{
  setTimeout(){return 0;},confirm(){return true;},SpeechSynthesisUtterance:function(){}
 },{filename:'app.js'});
 
-assert.match(view.innerHTML,/Привет, исследователь/);
+assert.match(view.innerHTML,/Привет,<br>солнышко!/);
 assert.match(view.innerHTML,/Карта приключений/);
 assert.match(view.innerHTML,/Приключения Волчонка/);
 assert.match(view.innerHTML,/Картинки/);
@@ -129,6 +129,10 @@ assert.match(view.innerHTML,/Карта приключений/);
 assert.equal((view.innerHTML.match(/class="module"/g)||[]).length,30,'30 course modules rendered');
 assert.equal((view.innerHTML.match(/data-start="/g)||[]).length,300,'300 session buttons rendered');
 assert.match(view.innerHTML,/day-num/);
+assert.match(view.innerHTML,/data-hop="0"/,'current steps must be visible');
+assert.match(read('index.html'),/storybook.css/);
+assert.match(read('index.html'),/wolfie.svg/);
+assert.match(read('index.html'),/data-tab="rewards"/);
 
 // End-to-end DOM-light UI smoke: first lesson, 10 correct choices, completion unlocks next day.
 view.querySelector('#continue').click();
