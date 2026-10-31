@@ -69,6 +69,21 @@ function launchExtra(kind){
  if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
  extras[kind]({view,state,save,speak,speakAvailable,onExit:renderPlay});
 }
+function achievements(){
+ const stories=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
+ const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
+ const letters=Object.keys(state.alphabetHeard||{}).length;
+ return [
+  {emoji:'🔤',name:'Открыватель букв',earned:letters===26,detail:letters+'/26 букв'},
+  {emoji:'👣',name:'Первый шаг',earned:passed('day-001'),detail:'Первое занятие'},
+  {emoji:'🎨',name:'Художник',earned:Object.values(state.pictureWins||{}).some(x=>x>=6),detail:'Игра с картинками'},
+  {emoji:'🎴',name:'Хранитель слов',earned:Object.keys(state.gameWins||{}).length>0,detail:'Игра в пары'},
+  {emoji:'📚',name:'Сказочник',earned:stories>=3,detail:stories+'/3 истории'},
+  {emoji:'🗣️',name:'Собеседник',earned:talks>=3,detail:talks+'/3 диалога'},
+  {emoji:'🗺️',name:'Путешественник',earned:passed('day-030'),detail:'30 уроков'},
+  {emoji:'🏔️',name:'Весь маршрут',earned:passed('day-300'),detail:'300 уроков'}
+ ];
+}
 function renderHome(){
  session=null;setNav('home');
  const next=nextLesson();
@@ -78,6 +93,9 @@ function renderHome(){
  html+=`<section class="feature"><div class="section-title"><h2>Продолжить путь</h2><span class="badge">Pre-A1 → B2</span></div>${next?`<div class="next"><span class="big-emoji">${modules[next.moduleIndex].emoji}</span><div><strong>Урок ${next.index+1}: ${esc(next.title)}</strong><p>${esc(modes[next.day-1])} · ${esc(modules[next.moduleIndex].level)}</p></div></div><button class="primary" id="continue">▶ Начать урок</button>`:'<p>Все занятия пройдены! Продолжай практику и попробуй независимую проверку знаний.</p>'}</section>`;
  html+='<section class="feature"><div class="section-title"><h2>🌟 Приключения Волчонка</h2><span class="badge">НОВОЕ</span></div><div class="quest-shortcuts"><button class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>15 историй</small></button><button class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Диалоги</b><small>10 бесед</small></button><button class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Запомни слова</small></button><button class="quest-shortcut" id="pictures-home"><span>🖼️</span><b>Картинки</b><small>Угадай слово</small></button></div></section>';
  html+=`<section class="feature"><h2>Пять ступеней английского 🏔️</h2><p>30 тем × 10 разных занятий. Материал внутри темы повторяется с новыми задачами — так он лучше запоминается.</p><div class="level-grid">${levels.map(level=>{const count=lessons.filter(l=>modules[l.moduleIndex].level===level&&passed(l.id)).length;return `<div class="level-box"><b>${level}</b><span>${esc(levelNames[level])}</span><small>${count}/60</small><div class="bar"><i style="width:${Math.round(count/60*100)}%"></i></div></div>`;}).join('')}</div></section>`;
+
+ const awards=achievements();
+ html+='<section class="feature"><div class="section-title"><h2>🏅 Мои награды</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/'+awards.length+'</span></div><div class="achievement-grid">'+awards.map(a=>'<div class="achievement '+(a.earned?'earned':'')+'"><span>'+a.emoji+'</span><b>'+esc(a.name)+'</b><small>'+esc(a.detail)+'</small></div>').join('')+'</div><p class="muted">Награды остаются с тобой. Можно повторять и учиться в своём темпе!</p></section>';
  html+='<section class="feature"><h2>Карта приключений 🗺️</h2><p>Занятия открываются по порядку. Для следующего шага достаточно 7 правильных ответов из 10.</p>';
  for(let i=0;i<modules.length;i++){
   const m=modules[i];const start=i*10,done=lessons.slice(start,start+10).filter(l=>passed(l.id)).length;
@@ -151,7 +169,7 @@ function renderFamily(){
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Родителям','Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
+ `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();renderFamily();}});
 }
 function buildKinds(index,level){
