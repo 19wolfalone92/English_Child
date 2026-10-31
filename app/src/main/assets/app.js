@@ -341,8 +341,9 @@ function renderFamily(){
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Родителям','Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button></section>`;
- view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();renderFamily();}});
+ `<section class="feature"><h2>Как идут занятия?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><button type="button" class="secondary" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
+ view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();applyTheme();renderFamily();}});
+ view.querySelector('#family-back')?.addEventListener('click',renderHome);
 }
 function buildKinds(index,level){
  const day=index%10,advanced=level==='B1'||level==='B2';
@@ -415,7 +416,7 @@ function answer(correct,chosen){
 function question(){
  const s=session;if(!s)return;
  if(s.index>=s.items.length){endSession();return;}
- setNav(s.kind==='course'?'home':s.kind==='review'?'review':'play');
+ setNav(s.kind==='course'?'home':'play');
  s.answered=false;
  const item=s.items[s.index];
  let kind=s.types[s.index]||'en-ru';
