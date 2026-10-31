@@ -199,13 +199,14 @@ function startFree(moduleIndex){
 function normalize(s){return String(s).normalize('NFKC').toLocaleLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9а-яё ]/gi,'').replace(/\s+/g,' ').trim();}
 function poolOptions(item,side){
  const m=session.module;
+ const limit=m.level==='Pre-A1'?2:m.level==='A1'?3:4;
  const candidates=[...m.items.filter(x=>x.id!==item.id),...modules.filter(x=>x.level===m.level&&x.id!==m.id).flatMap(x=>x.items)];
  const seen=new Set([side==='en'?item.en:item.ru]);
  const out=[item];
  for(const x of shuffle(candidates)){
   const value=side==='en'?x.en:x.ru;
   if(!seen.has(value)){out.push(x);seen.add(value);}
-  if(out.length===4)break;
+  if(out.length===limit)break;
  }
  return shuffle(out);
 }
