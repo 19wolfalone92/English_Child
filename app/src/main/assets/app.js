@@ -217,12 +217,12 @@ function renderHome(){
   html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">▶ Играть и учиться</button>`;
  }else html+='<p>Ты прошла весь маршрут! Можешь выбрать игру, сказку или повторение.</p><button class="primary" id="home-game">🎮 Выбрать игру</button>';
  html+='<button class="child-voice" id="home-voice" type="button">🔊 Послушать Вулфи</button></section>';
- html+='<section class="feature"><div class="section-lead"><h2>✨ ${esc(child("name"))} и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
+ html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("name"))+' и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
  '<button type="button" class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+
  '<button type="button" class="quest-shortcut" id="pictures-home"><span>🎨</span><b>Картинки</b><small>Угадывать слова</small></button>'+
  '<button type="button" class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+
  '<button type="button" class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Играть и помнить</small></button></div></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🗺️ Карта ${esc(child("genitive"))}</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
+ html+='<section class="feature"><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
  for(const l of lessons.slice(startAt,startAt+6)){
   const isDone=passed(l.id),available=openLesson(l);
   html+=`<button type="button" class="route-stop ${isDone?'complete':available?'ready':''}" data-hop="${l.index}" ${available?'':'disabled'} aria-label="Урок ${l.index+1}: ${esc(l.title)}"><span class="route-icon">${isDone?'🌸':available?'⭐':'☁️'}</span><b>Шаг ${l.index+1}</b><small>${isDone?'Пройдено':available?'Играть':'Позже'}</small></button>`;
@@ -240,7 +240,7 @@ function renderHome(){
  }
  html+='</details></section>';
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Азбука с картинками</h2><p>Потрогай буквы и послушай слова!</p></div><button class="secondary" type="button" id="alphabet">🔊 Буквы A–Z</button></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🏅 Награды ${esc(child("genitive"))}</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/8</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
+ html+='<section class="feature"><div class="section-lead"><h2>🏅 Награды '+esc(child("genitive"))+'</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/8</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
  view.innerHTML=html;
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
  view.querySelector('#home-voice')?.addEventListener('click',()=>speakHint('Привет, '+child('name')+'! Я волчонок Вулфи. Давай вместе учить английский! Нажми на большую кнопку, чтобы начать урок. Или выбери игру ниже.'));
@@ -309,7 +309,7 @@ function renderRewards(){
   html+=`<button type="button" class="garden-slot ${emoji?'full':''}" data-garden-slot="${i}" aria-label="Место ${i+1}: ${emoji?'украшено '+emoji:'пустое'}">${emoji||'✧'}</button>`;
  }
  html+='</div></div></section>';
- html+='<section class="feature"><h2>🌟 Наклейки ${esc(child("genitive"))}</h2><p>Цветные наклейки уже твои. Остальные откроются, когда будешь играть и учиться.</p><div class="achievement-grid">';
+ html+='<section class="feature"><h2>🌟 Наклейки '+esc(child("genitive"))+'</h2><p>Цветные наклейки уже твои. Остальные откроются, когда будешь играть и учиться.</p><div class="achievement-grid">';
  for(const award of awards){
   html+=`<button type="button" class="achievement sticker-card ${award.earned?'earned':''} ${state.chosenSticker===award.emoji&&award.earned?'sticker-selected':''}" data-sticker="${esc(award.emoji)}" ${award.earned?'':'disabled'} aria-label="${award.earned?'Выбрать наклейку':'Награда пока закрыта'}: ${esc(award.name)}"><span>${award.earned?award.emoji:'🔒'}</span><b>${esc(award.name)}</b><small>${esc(award.detail)}</small></button>`;
  }
