@@ -227,7 +227,7 @@ assert.match(view.innerHTML,/day-num/);
 assert.match(view.innerHTML,/data-hop="0"/,'current steps must be visible');
 assert.match(read('index.html'),/storybook.css/);
 assert.match(read('index.html'),/wolfie.svg/);
-assert.match(read('magic-world.css'),/eva-valley\\.svg/,'scene bundled in CSS');
+assert.match(read('magic-world.css'),/eva-valley\.svg/,'scene bundled in CSS');
 assert.match(read('app.js'),/world-sound/,'scene hotspots wired');
 assert.match(read('index.html'),/data-tab="rewards"/);
 
