@@ -53,6 +53,31 @@ const speak=text=>{
   }
  }catch(e){console.warn('Audio failed',e);}
 };
+const speakHint=text=>{
+ if(!text)return;
+ try{
+  if(bridge?.speakRussian){bridge.speakRussian(String(text).slice(0,250));return;}
+  if(window.speechSynthesis){
+   window.speechSynthesis.cancel();
+   const u=new SpeechSynthesisUtterance(String(text).slice(0,250));
+   u.lang='ru-RU';u.rate=.85;window.speechSynthesis.speak(u);
+  }
+ }catch(error){console.warn('Russian speech unavailable',error);}
+};
+const sparkle=()=>{
+ if(typeof view.insertAdjacentHTML!=='function')return;
+ view.insertAdjacentHTML('beforeend','<div class="decor-sparkles" aria-hidden="true"></div>');
+ const box=view.querySelector('.decor-sparkles');
+ if(!box)return;
+ for(let i=0;i<9;i++){
+  const icon=document.createElement('i');
+  icon.textContent=['⭐','✨','🌸','💖'][i%4];
+  icon.style.setProperty('--dx',(Math.cos(i*2*Math.PI/9)*135).toFixed(0)+'px');
+  icon.style.setProperty('--dy',(Math.sin(i*2*Math.PI/9)*120-45).toFixed(0)+'px');
+  box.appendChild(icon);
+ }
+ setTimeout(()=>{box.remove?.();},1100);
+};
 let tab='home',session=null;
 function setNav(selected){
  tab=selected;
@@ -67,7 +92,7 @@ function launchExtra(kind){
  session=null;setNav(kind==='openStories'?'stories':'play');
  const extras=window.KIDS_ADVENTURES;
  if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
- extras[kind]({view,state,save,speak,speakAvailable,onExit:renderPlay});
+ extras[kind]({view,state,save,speak,speakHint,speakAvailable,onExit:renderPlay});
 }
 function achievements(){
  const stories=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
@@ -183,7 +208,7 @@ function renderHome(){
   const m=modules[next.moduleIndex];
   html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">▶ Играть и учиться</button>`;
  }else html+='<p>Ты прошла весь маршрут! Можешь выбрать игру, сказку или повторение.</p><button class="primary" id="home-game">🎮 Выбрать игру</button>';
- html+='</section>';
+ html+='<button class="child-voice" id="home-voice" type="button">🔊 Послушать Вулфи</button></section>';
  html+='<section class="feature"><div class="section-lead"><h2>✨ Приключения Волчонка</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
  '<button type="button" class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+
  '<button type="button" class="quest-shortcut" id="pictures-home"><span>🎨</span><b>Картинки</b><small>Угадывать слова</small></button>'+
@@ -210,6 +235,7 @@ function renderHome(){
  html+='<section class="feature"><div class="section-lead"><h2>🏅 Мой волшебный сад</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/8</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
  view.innerHTML=html;
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
+ view.querySelector('#home-voice')?.addEventListener('click',()=>speakHint('Привет! Я волчонок Вулфи. Нажми на большую кнопку, чтобы начать урок. Или выбери игру ниже.'));
  view.querySelector('#home-game')?.addEventListener('click',renderPlay);
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
  view.querySelector('#stories-home')?.addEventListener('click',()=>launchExtra('openStories'));
@@ -400,11 +426,15 @@ function question(){
  <div class="bar"><i style="width:${Math.round(s.index/s.items.length*100)}%"></i></div>
  <section class="feature question"><span class="eyebrow">${esc(m.title)} · ${s.kind==='course'?'День '+day:'Практика'}</span><h1>${kind==='listen'?'🎧 Послушай фразу':kind==='reorder'?'🧩 Собери предложение':kind==='type'?'✍️ Напиши по-английски':'🎯 Выбери перевод'}</h1>`;
  if(s.kind==='course'&&s.index===0){
-  html+=`<div class="note"><b>Сегодня: ${esc(modes[day-1])}</b><br>${esc(m.rule)}<br>🌟 Задание: ${esc(m.mission)}</div>`;
+  html+=m.level==='Pre-A1'||m.level==='A1'?
+   `<div class="note"><b>🐾 Сегодня играем и учимся!</b><details><summary>Подсказка взрослому</summary><p>${esc(m.rule)}</p><p>🌟 ${esc(m.mission)}</p></details></div>`:
+   `<div class="note"><b>Сегодня: ${esc(modes[day-1])}</b><br>${esc(m.rule)}<br>🌟 Задание: ${esc(m.mission)}</div>`;
   if(day===6)html+=`<div class="mini-reader"><b>📖 Мини-текст для чтения</b><p>${m.items.slice(0,3).map(x=>esc(x.en)).join(' ')}</p></div>`;
   if(day===7)html+=`<div class="mini-reader"><b>✍️ Творческая работа</b><p>${esc(m.mission)} Покажи свою работу взрослому: программа не оценивает свободный текст автоматически.</p></div>`;
   if(day===5)html+=`<div class="mini-reader"><b>🎤 Говори вслух</b><p>Слушай английские фразы и повторяй. Попроси взрослого помочь с произношением.</p></div>`;
  }
+ const directions=kind==='listen'?'Нажми на звук, послушай фразу и найди правильный перевод.':kind==='reorder'?'Нажимай на слова по порядку, чтобы получилось предложение.':kind==='type'?'Напиши английскую фразу и нажми проверить.':'Выбери правильный перевод.';
+ html+='<button type="button" class="child-voice" id="hear-help">🔊 Послушать задание</button>';
  if(kind==='listen'){
   html+=`<p>Нажми на звук и выбери русский перевод. Английский текст появится после ответа.</p><button class="listen-big" id="speak-now" type="button" aria-label="Прослушать фразу">🔊</button>`;
  }else if(kind==='en-ru')html+=`<div class="prompt">${esc(item.en)}</div><button class="sound" id="speak-now" type="button">🔊 Слушать</button>`;
@@ -422,6 +452,7 @@ function question(){
  view.innerHTML=html;
  view.querySelector('#leave').addEventListener('click',()=>{session=null;if(s.kind==='course')renderHome();else if(s.kind==='review')renderReview();else renderPlay();});
  view.querySelector('#speak-now')?.addEventListener('click',()=>speak(item.en));
+ view.querySelector('#hear-help')?.addEventListener('click',()=>speakHint(directions));
  if(kind==='listen')setTimeout(()=>{if(session===s&&!s.answered) speak(item.en);},250);
  if(kind==='reorder'){
   const selection=[];
@@ -454,6 +485,7 @@ function endSession(){
  view.innerHTML=topHero(result,passedToday?'У тебя получилось!':'Каждая попытка важна!',`Верных ответов: ${correct} из ${s.items.length}.`)+
  `<section class="feature"><h2>${passedToday?'Звёздный результат!':'Можно попробовать ещё раз'}</h2><p>${s.kind==='course'?(passedToday?'Следующий урок открыт!':'Для открытия следующего урока нужно минимум 7 ответов из 10.'): 'Ты можешь повторить тему в любое время.'}</p><p>🎤 ${esc(s.module.mission)}</p><p class="muted">🌿 После одного занятия полезно сделать перерыв, потянуться и посмотреть вдаль.</p><p class="muted">Творческую устную и письменную работу программа не оценивает. Попроси взрослого послушать твой рассказ.</p><button class="primary" id="back-home">${s.kind==='course'?'Вернуться к курсу':'К тренировкам'}</button>${s.kind==='course'&&!passedToday?'<button class="secondary full" id="retry-day">↺ Повторить урок</button>':''}</section>`;
  view.querySelector('#back-home').addEventListener('click',()=>s.kind==='course'?renderHome():s.kind==='review'?renderReview():renderPlay());
+ if(passedToday)sparkle();
  view.querySelector('#retry-day')?.addEventListener('click',()=>start(s.lesson.index));
 }
 document.getElementById('theme-open')?.addEventListener('click',renderThemeChooser);
