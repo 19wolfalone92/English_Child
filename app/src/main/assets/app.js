@@ -68,6 +68,7 @@ function renderHome(){
  const next=nextLesson();
  let html=topHero('🐺','Привет, исследователь!','Английский — это приключение. Учись маленькими шагами, слушай, играй и смело пробуй снова.');
  html+=`<section class="home-stats"><div><strong>${passedCount()}/300</strong><span>занятий</span></div><div><strong>${Math.min(today(),10)}/10</strong><span>цель дня</span></div><div><strong>${state.xp||0}</strong><span>звёзд</span></div></section>`;
+ html+='<section class="feature alphabet-banner"><div><h2>🔤 Английская азбука</h2><p>Все 26 букв с озвучиванием и примерами.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
  html+=`<section class="feature"><div class="section-title"><h2>Продолжить путь</h2><span class="badge">Pre-A1 → B2</span></div>${next?`<div class="next"><span class="big-emoji">${modules[next.moduleIndex].emoji}</span><div><strong>Урок ${next.index+1}: ${esc(next.title)}</strong><p>${esc(modes[next.day-1])} · ${esc(modules[next.moduleIndex].level)}</p></div></div><button class="primary" id="continue">▶ Начать урок</button>`:'<p>Все занятия пройдены! Продолжай практику и попробуй независимую проверку знаний.</p>'}</section>`;
  html+=`<section class="feature"><h2>Пять ступеней английского 🏔️</h2><p>30 тем × 10 разных занятий. Материал внутри темы повторяется с новыми задачами — так он лучше запоминается.</p><div class="level-grid">${levels.map(level=>{const count=lessons.filter(l=>modules[l.moduleIndex].level===level&&passed(l.id)).length;return `<div class="level-box"><b>${level}</b><span>${esc(levelNames[level])}</span><small>${count}/60</small><div class="bar"><i style="width:${Math.round(count/60*100)}%"></i></div></div>`;}).join('')}</div></section>`;
  html+='<section class="feature"><h2>Карта приключений 🗺️</h2><p>Занятия открываются по порядку. Для следующего шага достаточно 7 правильных ответов из 10.</p>';
@@ -83,12 +84,27 @@ function renderHome(){
  }
  html+='</section>';
  view.innerHTML=html;
+ view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
  view.querySelectorAll('[data-start]').forEach(b=>b.addEventListener('click',()=>start(Number(b.dataset.start))));
+}
+function renderAlphabet(){
+ session=null;setNav('play');
+ const alphabet=Array.isArray(window.KIDS_ALPHABET)?window.KIDS_ALPHABET:[];
+ let html=topHero('🔤','Моя английская азбука','Все 26 букв! Нажми на карточку, чтобы услышать букву и слово. Повторяй вслух с волчонком.');
+ html+=`<section class="feature"><div class="section-title"><h2>Слушай и повторяй</h2><span class="badge">A–Z · ${alphabet.length}</span></div>
+ <div class="alphabet-grid">${alphabet.map(row=>`<button type="button" class="alphabet-card" data-say="${esc(row.letter)}" aria-label="Послушать ${esc(row.letter)} — ${esc(row.word)}"><strong>${esc(row.letter)}</strong><b>${esc(row.word)}</b><small>${esc(row.ru)}</small><span>🔊</span></button>`).join('')}</div><p class="muted">Название буквы и звук в слове могут различаться. Слушай слово целиком. Для озвучивания нужен английский голос в Android.</p><button class="secondary full" id="alphabet-back">← К тренировкам</button></section>`;
+ view.innerHTML=html;
+ view.querySelectorAll('[data-say]').forEach(btn=>btn.addEventListener('click',()=>{
+  const row=alphabet.find(a=>a.letter===btn.dataset.say);
+  if(row)speak(`${row.letter}. ${row.word}`);
+ }));
+ view.querySelector('#alphabet-back').addEventListener('click',renderPlay);
 }
 function renderPlay(){
  session=null;setNav('play');
  let html=topHero('🎮','Играй и учись','Выбери любую тему. Свободная тренировка не влияет на порядок уроков курса.');
+ html+='<section class="feature alphabet-banner"><div><h2>🔤 Буквы A–Z</h2><p>26 букв, слова и произношение.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
  html+='<div class="feature"><h2>Выбери уровень</h2><div class="level-buttons">'+levels.map(level=>`<button class="level-button ${state.level===level?'active':''}" data-level="${level}">${level}</button>`).join('')+'</div></div>';
  html+='<section class="feature"><h2>Игры и тренировки</h2><div class="play-grid">';
  for(const [i,m] of modules.entries()){
@@ -97,6 +113,7 @@ function renderPlay(){
  }
  html+='</div></section>';
  view.innerHTML=html;
+ view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
  view.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{state.level=b.dataset.level;save();renderPlay();}));
  view.querySelectorAll('[data-free]').forEach(b=>b.addEventListener('click',()=>startFree(Number(b.dataset.free))));
 }
