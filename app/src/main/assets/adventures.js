@@ -83,7 +83,7 @@ function storyEnd(){
  if(score>=2&&prev<2)ctx.state.xp=(ctx.state.xp||0)+15;
  ctx.save();current=null;
  ctx.view.innerHTML=title(score>=2?'🏆':'🌈',score>=2?childName()+', история разгадана!':childName()+', ты стала внимательнее!',`Правильных ответов: ${score} из 3.`)+
- `<section class="feature"><p>${score>=2?'⭐ История отмечена как прочитанная.':'Ты можешь прочитать рассказ снова и попробовать ещё раз.'}</p><p>Что бы ты сделал на месте героя? Расскажи взрослому одним-двумя английскими предложениями.</p><button class="primary" id="quest-list">К другим историям →</button><button class="secondary full" id="quest-reread">📖 Прочитать ещё раз</button></section>`;
+ `<section class="feature"><p>${score>=2?'⭐ История отмечена как прочитанная.':'Ты можешь прочитать рассказ снова и попробовать ещё раз.'}</p><p>Что бы ты сделала на месте героя? Расскажи взрослому одним-двумя английскими предложениями.</p><button class="primary" id="quest-list">К другим историям →</button><button class="secondary full" id="quest-reread">📖 Прочитать ещё раз</button></section>`;
  back('#quest-list',()=>openStories(ctx));back('#quest-reread',()=>readStory(s.story.id));
 }
 function openDialogues(api){
@@ -228,7 +228,7 @@ function pictureQuestion(){
    else if(button===b)button.classList.add('bad');
   });
   const box=ctx.view.querySelector('#picture-feedback');
-  box.innerHTML=`<div class="feedback ${ok?'':'retry'}"><strong>${ok?'🌟 Ты нашёл!':'💡 Теперь ты знаешь ответ!'}</strong><p><b lang="en">${esc(item.en)}</b> — ${esc(item.ru)} ${item.emoji}</p><button class="primary" id="picture-next">${s.index===7?'Результат':'Дальше →'}</button></div>`;
+  box.innerHTML=`<div class="feedback ${ok?'':'retry'}"><strong>${ok?'🌟 Ты нашла!':'💡 Теперь ты знаешь ответ!'}</strong><p><b lang="en">${esc(item.en)}</b> — ${esc(item.ru)} ${item.emoji}</p><button class="primary" id="picture-next">${s.index===7?'Результат':'Дальше →'}</button></div>`;
   back('#picture-next',()=>{s.index++;pictureQuestion();});
  }));
 }
