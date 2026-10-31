@@ -6,6 +6,9 @@ const assets=new URL('../app/src/main/assets/',import.meta.url);
 const read=(p)=>fs.readFileSync(new URL(p,assets),'utf8');
 const window={};
 vm.runInNewContext(read('content.js'),{window},{filename:'content.js'});
+vm.runInNewContext(read('phonics.js'),{window},{filename:'phonics.js'});
+assert.equal(window.KIDS_ALPHABET.length,26,'full English alphabet');
+assert.equal(window.KIDS_ALPHABET.map(x=>x.letter).join(''),'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 const modules=window.KIDS_MODULES;
 assert.equal(modules.length,30,'30 curated themed modules');
 const levels=['Pre-A1','A1','A2','B1','B2'];
@@ -26,6 +29,7 @@ for(const [index,m] of modules.entries()){
 }
 assert.match(read('index.html'),/content.js/);
 assert.match(read('index.html'),/app.js/);
+assert.match(read('index.html'),/phonics.js/);
 assert.doesNotMatch(read('index.html'),/https?:\/\//,'offline HTML has no remote resources');
 assert.match(read('app.js'),/KidsAndroid/);
 assert.match(read('app.js'),/speakAvailable/);
