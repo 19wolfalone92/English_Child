@@ -84,7 +84,7 @@ for(const item of first){
 }
 assert.match(view.innerHTML,/Следующий урок открыт/);
 view.querySelector('#back-home').click();
-assert.match(view.innerHTML,/2\/300/);
+assert.match(view.innerHTML,/1\/300/);
 const persisted=JSON.parse(storage);
 assert.equal(persisted.done['day-001'].passed,true);
 assert.equal(persisted.done['day-001'].best,10);
