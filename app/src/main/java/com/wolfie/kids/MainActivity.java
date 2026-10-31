@@ -65,7 +65,7 @@ public final class MainActivity extends Activity {
         }
         @JavascriptInterface public boolean isSpeechAvailable(){return ttsReady;}
         @JavascriptInterface public void speak(String text){
-            if(text==null || text.length()>350 || !ttsReady || tts==null)return;
+            if(text==null || text.length()>=TextToSpeech.getMaxSpeechInputLength() || !ttsReady || tts==null)return;
             runOnUiThread(()->tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"kids-tts"));
         }
     }
