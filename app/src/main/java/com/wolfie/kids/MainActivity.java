@@ -65,8 +65,33 @@ public final class MainActivity extends Activity {
         }
         @JavascriptInterface public boolean isSpeechAvailable(){return ttsReady;}
         @JavascriptInterface public void speak(String text){
-            if(text==null || text.length()>=TextToSpeech.getMaxSpeechInputLength() || !ttsReady || tts==null)return;
-            runOnUiThread(()->tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"kids-tts"));
+            if(text==null || text.length()>=TextToSpeech.getMaxSpeechInputLength() || !ttsReady)return;
+            runOnUiThread(()->{
+                if(tts==null || !ttsReady)return;
+                tts.setLanguage(Locale.US);
+                tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"kids-english");
+            });
+        }
+        /** Optional spoken guidance in Russian, only if Android has a Russian TTS voice installed. */
+        @JavascriptInterface public void speakRussian(String text){
+            if(text==null || text.length()>=TextToSpeech.getMaxSpeechInputLength())return;
+            runOnUiThread(()->{
+                if(tts==null)return;
+                int result=tts.setLanguage(new Locale("ru","RU"));
+                if(result>=TextToSpeech.LANG_AVAILABLE)
+                    tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"kids-russian");
+                else tts.setLanguage(Locale.US);
+            });
+        }
+        /** Only local hex values can be used for the native status/navigation bars. */
+        @JavascriptInterface public void setSystemBarColor(String hex){
+            if(hex==null || !hex.matches("#[0-9a-fA-F]{6}"))return;
+            final int color=Color.parseColor(hex);
+            runOnUiThread(()->{
+                getWindow().setStatusBarColor(color);
+                getWindow().setNavigationBarColor(color);
+                if(webView!=null)webView.setBackgroundColor(color);
+            });
         }
     }
 
