@@ -86,35 +86,51 @@ function achievements(){
 }
 function renderHome(){
  session=null;setNav('home');
- const next=nextLesson();
- let html=topHero('🐺','Привет, исследователь!','Английский — это приключение. Учись маленькими шагами, слушай, играй и смело пробуй снова.');
- html+=`<section class="home-stats"><div><strong>${passedCount()}/300</strong><span>занятий</span></div><div><strong>${Math.min(today(),10)}/10</strong><span>цель дня</span></div><div><strong>${state.xp||0}</strong><span>звёзд</span></div></section>`;
- html+='<section class="feature alphabet-banner"><div><h2>🔤 Английская азбука</h2><p>Все 26 букв с озвучиванием и примерами.</p></div><button type="button" class="secondary" id="alphabet">Изучать →</button></section>';
- html+=`<section class="feature"><div class="section-title"><h2>Продолжить путь</h2><span class="badge">Pre-A1 → B2</span></div>${next?`<div class="next"><span class="big-emoji">${modules[next.moduleIndex].emoji}</span><div><strong>Урок ${next.index+1}: ${esc(next.title)}</strong><p>${esc(modes[next.day-1])} · ${esc(modules[next.moduleIndex].level)}</p></div></div><button class="primary" id="continue">▶ Начать урок</button>`:'<p>Все занятия пройдены! Продолжай практику и попробуй независимую проверку знаний.</p>'}</section>`;
- html+='<section class="feature"><div class="section-title"><h2>🌟 Приключения Волчонка</h2><span class="badge">НОВОЕ</span></div><div class="quest-shortcuts"><button class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>15 историй</small></button><button class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Диалоги</b><small>10 бесед</small></button><button class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Запомни слова</small></button><button class="quest-shortcut" id="pictures-home"><span>🖼️</span><b>Картинки</b><small>Угадай слово</small></button></div></section>';
- html+=`<section class="feature"><h2>Пять ступеней английского 🏔️</h2><p>30 тем × 10 разных занятий. Материал внутри темы повторяется с новыми задачами — так он лучше запоминается.</p><div class="level-grid">${levels.map(level=>{const count=lessons.filter(l=>modules[l.moduleIndex].level===level&&passed(l.id)).length;return `<div class="level-box"><b>${level}</b><span>${esc(levelNames[level])}</span><small>${count}/60</small><div class="bar"><i style="width:${Math.round(count/60*100)}%"></i></div></div>`;}).join('')}</div></section>`;
-
- const awards=achievements();
- html+='<section class="feature"><div class="section-title"><h2>🏅 Мои награды</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/'+awards.length+'</span></div><div class="achievement-grid">'+awards.map(a=>'<div class="achievement '+(a.earned?'earned':'')+'"><span>'+a.emoji+'</span><b>'+esc(a.name)+'</b><small>'+esc(a.detail)+'</small></div>').join('')+'</div><p class="muted">Награды остаются с тобой. Можно повторять и учиться в своём темпе!</p></section>';
- html+='<section class="feature"><h2>Карта приключений 🗺️</h2><p>Занятия открываются по порядку. Для следующего шага достаточно 7 правильных ответов из 10.</p>';
+ const next=nextLesson(),doneCount=passedCount(),awards=achievements();
+ const current=next?next.index:299;
+ const startAt=Math.max(0,Math.min(current-2,lessons.length-6));
+ let html=`<section class="hero home-welcome"><div class="welcome-copy"><div class="eyebrow">🐾 WOLFIE'S MAGIC WORLD</div><h1>Привет,<br>солнышко!</h1><p>Пойдём играть и открывать английский?</p></div><img class="wolfie-home" src="wolfie.svg" alt="Вулфи — добрый волчонок с бантиком"><span class="welcome-sparkle one">✨</span><span class="welcome-sparkle two">✦</span></section>`;
+ html+=`<section class="home-stats"><div><strong>⭐ ${state.xp||0}</strong><span>звёздочки</span></div><div><strong>🌸 ${doneCount}</strong><span>уроков</span></div><div><strong>🏅 ${awards.filter(a=>a.earned).length}</strong><span>наклейки</span></div></section>`;
+ html+=`<section class="feature home-start"><div class="section-lead"><h2>🌷 Твой следующий шаг</h2><span class="badge">${next?esc(modules[next.moduleIndex].level):'Ура! 🎉'}</span></div>`;
+ if(next){
+  const m=modules[next.moduleIndex];
+  html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">▶ Играть и учиться</button>`;
+ }else html+='<p>Ты прошла весь маршрут! Можешь выбрать игру, сказку или повторение.</p><button class="primary" id="home-game">🎮 Выбрать игру</button>';
+ html+='</section>';
+ html+='<section class="feature"><div class="section-lead"><h2>✨ Приключения Волчонка</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
+ '<button type="button" class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+
+ '<button type="button" class="quest-shortcut" id="pictures-home"><span>🎨</span><b>Картинки</b><small>Угадывать слова</small></button>'+
+ '<button type="button" class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+
+ '<button type="button" class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Играть и помнить</small></button></div></section>';
+ html+='<section class="feature"><div class="section-lead"><h2>🗺️ Карта приключений</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
+ for(const l of lessons.slice(startAt,startAt+6)){
+  const isDone=passed(l.id),available=openLesson(l);
+  html+=`<button type="button" class="route-stop ${isDone?'complete':available?'ready':''}" data-hop="${l.index}" ${available?'':'disabled'} aria-label="Урок ${l.index+1}: ${esc(l.title)}"><span class="route-icon">${isDone?'🌸':available?'⭐':'☁️'}</span><b>Шаг ${l.index+1}</b><small>${isDone?'Пройдено':available?'Играть':'Позже'}</small></button>`;
+ }
+ html+='</div><details class="route-all"><summary>🧭 Все острова и уроки</summary><p class="map-intro">В каждом острове 10 маленьких занятий. Раскрой островок, чтобы увидеть все шаги.</p>';
  for(let i=0;i<modules.length;i++){
-  const m=modules[i];const start=i*10,done=lessons.slice(start,start+10).filter(l=>passed(l.id)).length;
+  const m=modules[i],begin=i*10,done=lessons.slice(begin,begin+10).filter(l=>passed(l.id)).length;
   const expanded=next&&next.moduleIndex===i;
-  html+=`<details class="module" ${expanded?'open':''}><summary><span class="module-symbol">${m.emoji}</span><span class="module-text"><strong>${esc(m.title)}</strong><small>${m.level} · ${done}/10 занятий</small></span><span class="disclosure">⌄</span></summary><div class="lesson-grid">`;
-  lessons.slice(start,start+10).forEach(l=>{
+  html+=`<details class="module" ${expanded?'open':''}><summary><span class="module-symbol">${m.emoji}</span><span class="module-text"><strong>${esc(m.title)}</strong><small>${esc(levelNames[m.level])} · ${done}/10</small></span><span class="disclosure">⌄</span></summary><div class="lesson-grid">`;
+  lessons.slice(begin,begin+10).forEach(l=>{
    const available=openLesson(l);
-   html+=`<button type="button" class="day ${passed(l.id)?'complete':''}" data-start="${l.index}" ${available?'':'disabled'}><span class="day-num">${passed(l.id)?'✓':available?'▶':'🔒'}</span><span><strong>День ${l.index+1}</strong><small>${esc(l.mode)}</small></span></button>`;
+   html+=`<button type="button" class="day ${passed(l.id)?'complete':''}" data-start="${l.index}" ${available?'':'disabled'}><span class="day-num">${passed(l.id)?'✓':available?'▶':'🔒'}</span><span><strong>Шаг ${l.index+1}</strong><small>${esc(l.mode)}</small></span></button>`;
   });
   html+='</div></details>';
  }
- html+='</section>';
+ html+='</details></section>';
+ html+='<section class="feature alphabet-banner"><div><h2>🔤 Азбука с картинками</h2><p>Потрогай буквы и послушай слова!</p></div><button class="secondary" type="button" id="alphabet">🔊 Буквы A–Z</button></section>';
+ html+='<section class="feature"><div class="section-lead"><h2>🏅 Мой волшебный сад</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/8</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
  view.innerHTML=html;
+ view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
+ view.querySelector('#home-game')?.addEventListener('click',renderPlay);
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
  view.querySelector('#stories-home')?.addEventListener('click',()=>launchExtra('openStories'));
  view.querySelector('#dialogues-home')?.addEventListener('click',()=>launchExtra('openDialogues'));
  view.querySelector('#memory-home')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelector('#pictures-home')?.addEventListener('click',()=>launchExtra('openPictures'));
- view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
+ view.querySelector('#rewards-home')?.addEventListener('click',renderRewards);
+ view.querySelectorAll('[data-hop]').forEach(b=>b.addEventListener('click',()=>start(Number(b.dataset.hop))));
  view.querySelectorAll('[data-start]').forEach(b=>b.addEventListener('click',()=>start(Number(b.dataset.start))));
 }
 function renderAlphabet(){
