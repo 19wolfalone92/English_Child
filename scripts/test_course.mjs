@@ -179,7 +179,7 @@ for(const step of window.KIDS_DIALOGUES[0].steps){
  assert.ok(good);
  good.click();
  assert.match(view.querySelector('#dialogue-notice').innerHTML,/Здорово/);
- view.querySelector('#dialogue-notice').querySelector('#dialogue-next').click();
+ view.querySelector('#dialogue-next').click();
 }
 assert.match(view.innerHTML,/Разговор завершён/);
 assert.equal(JSON.parse(storage).dialogueScores['dialogue-01'].best,3);
@@ -196,7 +196,7 @@ for(let n=0;n<8;n++){
  assert.ok(good,'matching picture exists');
  good.click();
  assert.match(view.querySelector('#picture-feedback').innerHTML,/Ты нашёл/);
- view.querySelector('#picture-feedback').querySelector('#picture-next').click();
+ view.querySelector('#picture-next').click();
 }
 assert.match(view.innerHTML,/Художник-исследователь/);
 assert.equal(JSON.parse(storage).xp,140);
