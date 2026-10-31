@@ -44,6 +44,13 @@ function recoverData(x){
  r.alphabetHeard=Object.fromEntries(Object.entries(safeRecord(x.alphabetHeard)).filter(([key,v])=>/^[A-Z]$/.test(key)&&v===true));
  r.garden=Array.isArray(x.garden)?x.garden.slice(0,8).map(v=>typeof v==='string'&&v.length<12?v:''):[];
  r.chosenSticker=typeof x.chosenSticker==='string'&&x.chosenSticker.length<12?x.chosenSticker:null;
+ const a=safeRecord(x.activeCourse);
+ if(Number.isInteger(a.lessonIndex)&&a.lessonIndex>=0&&a.lessonIndex<300 &&
+    Number.isInteger(a.index)&&a.index>=0&&a.index<=10 &&
+    Number.isInteger(a.correct)&&a.correct>=0&&a.correct<=a.index &&
+    Array.isArray(a.answers)&&a.answers.length===a.index&&a.answers.every(v=>typeof v==='boolean')){
+  r.activeCourse={lessonIndex:a.lessonIndex,index:a.index,correct:a.correct,answers:a.answers.slice(0,10)};
+ }
  return r;
 }
 let state=fresh();
@@ -246,7 +253,7 @@ function renderHome(){
  html+=`<section class="feature home-start"><div class="section-lead"><h2>🌷 Следующий шаг ${esc(child("genitive"))}</h2><span class="badge">${next?esc(levelNames[modules[next.moduleIndex].level]):'Ура! 🎉'}</span></div>`;
  if(next){
   const m=modules[next.moduleIndex];
-  html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">▶ Играть и учиться</button>`;
+  html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">${state.activeCourse?.lessonIndex===next.index?'▶ Продолжить занятие':'▶ Играть и учиться'}</button>`;
  }else html+='<p>Ты прошла весь маршрут! Можешь выбрать игру, сказку или повторение.</p><button class="primary" id="home-game">🎮 Выбрать игру</button>';
  html+='<button class="child-voice" id="home-voice" type="button">🔊 Послушать Вулфи</button></section>';
  html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("name"))+' и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
@@ -410,7 +417,11 @@ function start(index){
  const module=modules[l.moduleIndex];
  const offset=l.day%10;
  const items=module.items.slice(offset).concat(module.items.slice(0,offset));
- session={kind:'course',lesson:l,module,items,types:buildKinds(index,module.level),index:0,correct:0,answers:[]};
+ const checkpoint=state.activeCourse?.lessonIndex===index?state.activeCourse:null;
+ session={kind:'course',lesson:l,module,items,types:buildKinds(index,module.level),
+  index:checkpoint?.index||0,correct:checkpoint?.correct||0,answers:checkpoint?.answers?.slice()||[]};
+ state.activeCourse={lessonIndex:index,index:session.index,correct:session.correct,answers:session.answers.slice()};
+ save();
  question();
 }
 function startFree(moduleIndex){
@@ -448,6 +459,11 @@ function answer(correct,chosen){
  const x=session.items[session.index];
  session.correct+=Number(correct);
  session.answers.push(correct);
+ if(session.kind==='course'){
+  // Persist the next unanswered question atomically with its earned XP.
+  state.activeCourse={lessonIndex:session.lesson.index,index:session.index+1,
+   correct:session.correct,answers:session.answers.slice()};
+ }
  record(x,correct);
  const responses=view.querySelectorAll('[data-answer]');
  responses.forEach(b=>{
@@ -526,6 +542,7 @@ function endSession(){
  const s=session;if(!s)return;
  const correct=s.correct,passedToday=correct>=Math.ceil(s.items.length*.7);
  if(s.kind==='course'){
+  delete state.activeCourse;
   const old=state.done[s.lesson.id]||{best:0,attempts:0};
   state.done[s.lesson.id]={best:Math.max(old.best||0,correct),passed:passedToday||!!old.passed,attempts:(old.attempts||0)+1};
   save();
