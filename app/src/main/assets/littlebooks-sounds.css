@@ -70,3 +70,7 @@
 .reading-scene{min-height:140px}.reading-option-image{height:72px}.reading-page{padding:15px 8px}}
 @media(min-width:580px){.reading-shelf{grid-template-columns:repeat(4,minmax(0,1fr))}.soundfamily-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.reading-book-cover{transform:none}}
+
+.reading-ready{min-height:68px;width:100%;margin-top:13px;font-size:clamp(15px,4.4vw,21px)}
+.reading-recall-hint{font-size:14px;line-height:1.5;color:var(--ui-deep);font-weight:700}
+#reading-learning[hidden],#reading-check[hidden]{display:none!important}
