@@ -290,10 +290,10 @@ function renderHome(){
  '</div><p class="magic-map-footer">🌈 Выбери домик или полянку. Все дорожки безопасные и работают без интернета!</p></section>';
 html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("name"))+' и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
  '<button type="button" class="quest-shortcut" id="first-home"><span>🐾</span><b>Первые слова</b><small>120 слов с нуля</small></button>'+ 
- '<button type="button" class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+ 
+ '<button type="button" class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+  
  '<button type="button" class="quest-shortcut" id="pictures-home"><span>🎨</span><b>Картинки</b><small>Угадывать слова</small></button>'+
  '<button type="button" class="quest-shortcut" id="sound-home"><span>🎧</span><b>Звуковой лес</b><small>48 знакомых слов</small></button>'+
- '<button type="button" class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+
+ '<button type="button" class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+ 
  '<button type="button" class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Играть и помнить</small></button></div></section>';
  html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
  for(const l of lessons.slice(startAt,startAt+6)){
@@ -349,6 +349,7 @@ function renderAlphabet(){
 }
 function renderPlay(){
  session=null;setNav('play');
+ const seedCount=Object.keys(state.seedDone||{}).length;
  if(!state.advancedContent&&['B1','B2'].includes(state.level)){
   state.level='Pre-A1';save();
  }
@@ -358,14 +359,14 @@ function renderPlay(){
  '<button class="quest-shortcut" id="sound-play-game"><span>🎧</span><b>Звуковой лес</b><small>Слушай и находи</small></button>'+ 
  '<button class="quest-shortcut" id="pictures-play"><span>🖼️</span><b>Угадай картинку</b><small>Для самых маленьких</small></button>'+
  '<button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Играй со словами</small></button>'+
- '<button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читаем вместе</small></button>'+
- '<button class="quest-shortcut" id="dialogues-play"><span>🗣️</span><b>Поболтаем</b><small>Выбирай ответ</small></button></div></section>';
+ '<button class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="stories-play"><span>📚</span><b>Сказки</b><small>Читаем вместе</small></button>'+ 
+ '<button class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="dialogues-play"><span>🗣️</span><b>Поболтаем</b><small>Выбирай ответ</small></button></div></section>';
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Волшебные буквы</h2><p>A, B, C… Каждую можно послушать!</p></div><button type="button" class="secondary" id="alphabet">🔊 Азбука →</button></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🌼 Повторим?</h2><span class="badge">Для памяти</span></div><p>Знакомые слова возвращаются, чтобы ты их не забыла.</p><button type="button" class="secondary full" id="review-play">🧠 Повторять слова</button></section>';
- html+='<section class="feature"><h2>🧚 Выбери свой мир</h2><p>Начни с первых слов. Другие ступени подрастут вместе с тобой!</p><div class="level-buttons">';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><div class="section-lead"><h2>🌼 Повторим?</h2><span class="badge">Для памяти</span></div><p>Знакомые слова возвращаются, чтобы ты их не забыла.</p><button type="button" class="secondary full" id="review-play">🧠 Повторять слова</button></section>';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><h2>🧚 Выбери свой мир</h2><p>Начни с первых слов. Другие ступени подрастут вместе с тобой!</p><div class="level-buttons">';
  html+=levels.filter(l=>state.advancedContent||!['B1','B2'].includes(l)).map(l=>`<button class="level-button ${state.level===l?'active':''}" data-level="${l}">${esc(l)}<br><small>${esc(levelNames[l])}</small></button>`).join('');
  html+='</div></section>';
- html+='<section class="feature"><h2>🐾 Мои темы</h2><div class="play-grid">';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><h2>🐾 Мои темы</h2><div class="play-grid">';
  for(const [i,m] of modules.entries()){
   if(m.level!==state.level)continue;
   html+=`<button class="play-card" data-free="${i}"><span class="big-emoji">${m.emoji}</span><strong>${esc(m.title)}</strong><small>Играй со словами</small></button>`;
