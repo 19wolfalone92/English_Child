@@ -5,11 +5,11 @@ android {
   defaultConfig {
     applicationId 'com.eva.english.kids'
     // Diagnostic side-by-side build, preserving an older differently signed installation.
-    if (project.hasProperty('freshInstall')) applicationIdSuffix '.fresh070'
+    if (project.hasProperty('freshInstall')) applicationIdSuffix '.fresh080'
     minSdk 24
     targetSdk 35
-    versionCode 9
-    versionName '0.7.0'
+    versionCode 10
+    versionName '0.8.0'
   }
   compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
   buildTypes { release { minifyEnabled false } }
