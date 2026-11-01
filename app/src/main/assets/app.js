@@ -30,7 +30,7 @@ function recoverData(x){
  r.days=Object.fromEntries(Object.entries(safeRecord(x.days)).filter(([k])=>/^\d{4}-\d{2}-\d{2}$/.test(k))
   .map(([k,v])=>[k,boundedNumber(v)]));
  r.xp=boundedNumber(x.xp);r.answers=boundedNumber(x.answers);r.correct=Math.min(boundedNumber(x.correct),r.answers);
- r.seedDone=Object.fromEntries(Object.entries(safeRecord(x.seedDone)).filter(([id,v])=>/^seed-\\d{2}$/.test(id)&&v===true));
+ r.seedDone=Object.fromEntries(Object.entries(safeRecord(x.seedDone)).filter(([id,v])=>/^seed-\d{2}$/.test(id)&&v===true));
  r.level=levels.includes(x.level)?x.level:r.level;
  r.advancedContent=x.advancedContent===true;
  r.theme=typeof x.theme==='string'&&['lilac','strawberry','mint','sky','sunshine','rainbow','midnight','inventor','princess','candy','ocean','berry','custom'].includes(x.theme)?x.theme:r.theme;
@@ -295,7 +295,7 @@ html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("n
  '<button type="button" class="quest-shortcut" id="sound-home"><span>🎧</span><b>Звуковой лес</b><small>48 знакомых слов</small></button>'+
  '<button type="button" class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+
  '<button type="button" class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Играть и помнить</small></button></div></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
  for(const l of lessons.slice(startAt,startAt+6)){
   const isDone=passed(l.id),available=openLesson(l);
   html+=`<button type="button" class="route-stop ${isDone?'complete':available?'ready':''}" data-hop="${l.index}" ${available?'':'disabled'} aria-label="Урок ${l.index+1}: ${esc(l.title)}"><span class="route-icon">${isDone?'🌸':available?'⭐':'☁️'}</span><b>Шаг ${l.index+1}</b><small>${isDone?'Пройдено':available?'Играть':'Позже'}</small></button>`;
