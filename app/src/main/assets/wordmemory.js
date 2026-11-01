@@ -63,12 +63,13 @@ function question(){
 function answer(button,word){
  const s=session;if(!s||s.answered)return;s.answered=true;
  const ok=button.dataset.memoryAnswer===word.id;if(ok)s.correct++;
- // Even unscheduled play trains recall, but it cannot extend an unfinished due interval.
+ // Playing before the due date must NOT advance the interval or postpone real review.
  const rec=ctx.state.seedMemory?.[word.id]||{seen:0,correct:0,stage:0,due:0};
- const stage=ok?Math.min((rec.stage||0)+1,5):0;
+ const time=Date.now(),scheduled=Number(rec.due)<=time;
+ const stage=ok?(scheduled?Math.min((rec.stage||0)+1,5):(rec.stage||0)):0;
+ const nextDue=ok?(scheduled?time+intervals[stage]*86400000:rec.due):time;
  ctx.state.seedMemory??={};
- ctx.state.seedMemory[word.id]={stage,seen:(rec.seen||0)+1,correct:(rec.correct||0)+Number(ok),
-  due:Date.now()+intervals[stage]*86400000};
+ ctx.state.seedMemory[word.id]={stage,seen:(rec.seen||0)+1,correct:(rec.correct||0)+Number(ok),due:nextDue};
  ctx.save();
  ctx.view.querySelectorAll('[data-memory-answer]').forEach(b=>{b.disabled=true;if(b.dataset.memoryAnswer===word.id)b.classList.add('good');else if(b===button)b.classList.add('bad');});
  ctx.view.querySelector('#memory-feedback').innerHTML=`<div class="feedback ${ok?'':'retry'}"><strong>${ok?'🌟 Отличная память!':'💖 Учимся понемногу!'}</strong>
