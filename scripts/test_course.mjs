@@ -260,6 +260,9 @@ for(let i=0;i<20;i++){
   const match=view.querySelectorAll('[data-reading-choice]').find(b=>b.dataset.readingChoice===target.id);
   assert.ok(match,'correct story answer '+target.en);
   match.click();
+  assert.equal(view.querySelector('#reading-result').innerHTML,'','answer is blocked while the illustration is visible');
+  view.querySelector('#reading-ready').click();
+  match.click();
   assert.match(view.querySelector('#reading-result').innerHTML,/Ты поняла, Ева!/);
   view.querySelector('#reading-next').click();
  }
@@ -272,6 +275,7 @@ window.KIDS_MINI_READERS.open({view,state:bookState,save(){},speak(){},speakAvai
 view.querySelectorAll('[data-mini-book]')[0].click();
 for(let i=0;i<3;i++){
  const target=window.KIDS_FIRST_STEPS.packs[0].words[i];
+ view.querySelector('#reading-ready').click();
  view.querySelectorAll('[data-reading-choice]').find(b=>b.dataset.readingChoice===target.id).click();
  view.querySelector('#reading-next').click();
 }
