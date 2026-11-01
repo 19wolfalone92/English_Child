@@ -89,7 +89,10 @@ function coach(){
 }
 function playPhrase(i){
  const p=packs[i],w=p.words[targetIndexes[i]],text=phrases[i];
- const second=p.words.find(x=>x.id!==w.id);
+ // A distractor MUST NOT be another word contained in the spoken phrase.
+ const spokenWords=new Set(text.toLowerCase().match(/[a-z]+/g)||[]);
+ const second=p.words.find(x=>x.id!==w.id&&!x.en.split(' ').some(term=>spokenWords.has(term)));
+
  const options=i%2===0?[w,second]:[second,w];
  if(!ctx||!w||!second)return;
  const sound=ctx.speakAvailable();
