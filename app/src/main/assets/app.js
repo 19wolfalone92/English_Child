@@ -11,7 +11,7 @@ const lessons = modules.flatMap((m,i)=>Array.from({length:10},(_,n)=>({id:'day-'
 const lookup = new Map(modules.flatMap(m=>m.items.map(item=>[item.id,item])));
 const view = document.getElementById('view');
 const bridge = window.KidsAndroid || null;
-const fresh = () => ({done:{},items:{},seedDone:{},seedMemory:{},alphaDone:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1',theme:'lilac',advancedContent:false});
+const fresh = () => ({done:{},items:{},seedDone:{},seedMemory:{},alphaDone:{},phraseDone:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1',theme:'lilac',advancedContent:false});
 const safeRecord=x=>x && typeof x==='object' && !Array.isArray(x) ? x : {};
 const boundedNumber=(x,max=100000000)=>{
  const n=Number(x);
@@ -37,6 +37,8 @@ function recoverData(x){
    correct:boundedNumber(v.correct,100000),due:boundedNumber(v.due,9999999999999)}]));
  r.alphaDone=Object.fromEntries(Object.entries(safeRecord(x.alphaDone))
   .filter(([id,v])=>/^letters-[0-6]$/.test(id)&&v===true));
+ r.phraseDone=Object.fromEntries(Object.entries(safeRecord(x.phraseDone))
+  .filter(([id,v])=>/^phrase-(?:[0-9]|1[0-9])$/.test(id)&&v===true));
  r.level=levels.includes(x.level)?x.level:r.level;
  r.advancedContent=x.advancedContent===true;
  r.theme=typeof x.theme==='string'&&['lilac','strawberry','mint','sky','sunshine','rainbow','midnight','inventor','princess','candy','ocean','berry','custom'].includes(x.theme)?x.theme:r.theme;
@@ -149,6 +151,13 @@ function launchExtra(kind){
  const extras=window.KIDS_ADVENTURES;
  if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
  extras[kind]({view,state,save,speak,speakHint,speakAvailable,onExit:renderPlay,identity});
+}
+function launchTeacherPath(){
+ session=null;setNav('home');
+ const game=window.KIDS_TEACHER_PATH;
+ if(game?.open)game.open({view,state,save,speak,speakAvailable,identity,
+  onExit:renderHome,onWords:launchFirstSteps,onABC:launchAlphabetQuest,onMemory:launchWordMemory});
+ else renderHome();
 }
 function launchAlphabetQuest(){
  session=null;setNav('play');
@@ -295,6 +304,7 @@ function renderHome(){
  <h2>Мои первые 120 слов</h2><p>20 маленьких полянок с картинками, звуком и добрыми играми. Никаких сложных фраз!</p>
  <button class="primary seed-primary" id="start-seed">▶ ${seedCount===0?'Моё самое первое занятие':seedCount<20?'Продолжить учить слова':'Играть с первыми словами'}</button>
  <div class="seed-home-art"><span><img src="first-cat.svg" alt=""></span><span><img src="first-apple.svg" alt=""></span><span>🌈</span><span>🧸</span></div>
+ <button class="teacher-home-journey" type="button" id="teacher-home">🌈 Мой учебный маршрут — что учим сегодня?</button>
  <div class="seed-home-duo">
  <button class="seed-sidecall" id="alphabet-first" type="button">🔤 <b>Учить буквы A–Z</b><small>${alphaCount}/7 островков</small></button>
  <button class="seed-sidecall" id="memory-first" type="button">🧠 <b>Помню слова!</b><small>${dueCount?'Пора повторить '+dueCount:'Повторять и запоминать'}</small></button>
@@ -341,6 +351,7 @@ html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("n
  view.innerHTML=html;
  view.querySelector('#start-seed')?.addEventListener('click',launchFirstSteps);
  view.querySelector('#alphabet-first')?.addEventListener('click',launchAlphabetQuest);
+ view.querySelector('#teacher-home')?.addEventListener('click',launchTeacherPath);
  view.querySelector('#memory-first')?.addEventListener('click',launchWordMemory);
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
  view.querySelector('#home-voice')?.addEventListener('click',()=>speakHint('Привет, '+child('name')+'! Я волчонок Вулфи. Давай вместе учить английский! Нажми на большую кнопку, чтобы начать урок. Или выбери игру ниже.'));
@@ -382,6 +393,7 @@ function renderPlay(){
  let html=topHero('🎲',child('name')+', давай играть!','Какую игру выберем? Просто нажми на большую картинку!');
  html+='<section class="feature"><div class="section-lead"><h2>🎮 Выбери игру</h2><span class="badge">5 игр</span></div><div class="quest-shortcuts">'+
  '<button class="quest-shortcut" id="seed-play-game"><span>🐾</span><b>Мои первые 120 слов</b><small>Начать совсем с нуля</small></button>'+
+ '<button class="quest-shortcut" id="teacher-play"><span>🌈</span><b>Учебный маршрут</b><small>План от учителя</small></button>'+
  '<button class="quest-shortcut" id="alphabet-play"><span>🔤</span><b>Азбука Евы</b><small>26 букв в 7 играх</small></button>'+
  '<button class="quest-shortcut" id="wordmemory-play"><span>🧠</span><b>Вспомним слова</b><small>Помним надолго!</small></button>'+ 
  '<button class="quest-shortcut" id="sound-play-game"><span>🎧</span><b>Звуковой лес</b><small>Слушай и находи</small></button>'+ 
@@ -407,6 +419,7 @@ function renderPlay(){
  view.querySelector('#memory-play')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelector('#pictures-play')?.addEventListener('click',()=>launchExtra('openPictures'));
  view.querySelector('#seed-play-game')?.addEventListener('click',launchFirstSteps);
+ view.querySelector('#teacher-play')?.addEventListener('click',launchTeacherPath);
  view.querySelector('#alphabet-play')?.addEventListener('click',launchAlphabetQuest);
  view.querySelector('#wordmemory-play')?.addEventListener('click',launchWordMemory);
  view.querySelector('#sound-play-game')?.addEventListener('click',launchSoundGarden);
@@ -467,12 +480,16 @@ function renderFamily(){
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Прогресс '+child('genitive'),'Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Первые слова и буквы</h3><p>🌷 Из 20 полянок: ${seedCount}. 🌟 Изучено групп букв: ${Object.keys(state.alphaDone||{}).length}/7. 🧠 Сегодня готовы к повторению: ${window.KIDS_WORD_MEMORY?.due?.(state)?.length||0}. Всего знакомимся со 120 простыми словами до сложных фраз, письма и грамматики. Рекомендуется несколько минут за один раз.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
+ `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Первые слова и буквы</h3><p>🌷 Из 20 полянок: ${seedCount}. 🌟 Изучено групп букв: ${Object.keys(state.alphaDone||{}).length}/7. 🧠 Сегодня готовы к повторению: ${window.KIDS_WORD_MEMORY?.due?.(state)?.length||0}. Всего знакомимся со 120 простыми словами до сложных фраз, письма и грамматики. Рекомендуется несколько минут за один раз.</p><h3>Пошаговый маршрут от учителя</h3><p>Для шестилетнего ребёнка: 4 короткие встречи в неделю по 5–10 минут. Два раза узнавать новые слова по тройкам, один раз учить буквы, один раз повторять старые слова и играть с настоящими игрушками. Условные фазы Pre-A1 → A1 → A2 → B1 → B2 не являются автоматическим присвоением уровня: нужны возрастная готовность, речь, письмо и независимая проверка.</p>
+ <p>💬 Простых фраз с пониманием: ${Object.keys(state.phraseDone||{}).length}/20.</p>
+ <button type="button" class="secondary full" id="parent-teacher">🌈 Показать подробный план занятий</button>
+ <h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
  view.querySelector('#toggle-advanced')?.addEventListener('click',()=>{
   state.advancedContent=!state.advancedContent;
   if(!state.advancedContent&&['B1','B2'].includes(state.level))state.level='Pre-A1';
   save();renderFamily();
  });
+ view.querySelector('#parent-teacher')?.addEventListener('click',launchTeacherPath);
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();applyTheme();renderFamily();}});
  view.querySelector('#export-progress')?.addEventListener('click',()=>{
   if(bridge?.exportProgress)bridge.exportProgress();
