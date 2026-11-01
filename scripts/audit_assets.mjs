@@ -28,8 +28,9 @@ const scene=file('eva-valley.svg'),character=file('wolfie.svg');
 const starterNames=['cat','dog','sun','apple','ball','mom'];
 for(const w of starterNames){
  const illustration=file('first-'+w+'.svg');
- assert.match(illustration,/<svg\\s/,'real offline vector art for '+w);
- assert.doesNotMatch(illustration,/<script|https?:\\/\\/|onload=|<foreignObject/i,'safe beginner SVG '+w);
+ assert.ok(illustration.startsWith('<svg '),'real offline SVG illustration '+w);
+ for(const bad of ['<script','https://','http://','onload=','<foreignObject'])
+  assert.ok(!illustration.includes(bad),'unsafe external or executable content in beginner art '+w);
 }
 for(const [name,svg] of [['landscape',scene],['character',character]]){
  assert.match(svg,/<svg\s[^>]*viewBox=/,'scalable SVG '+name);
