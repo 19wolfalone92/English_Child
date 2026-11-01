@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# Avoid burning GitHub runner time on intermediate commits during child-app development.
+concurrency:
+  group: eva-kids-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -50,20 +54,20 @@ jobs:
           "$SIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Eva-English-Kids-v0.9.2-Android13
+          name: Eva-English-Kids-v0.9.3-Android13
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Build separately installable Android 13 edition
         run: |
           gradle --no-daemon -PfreshInstall :app:assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Eva-English-Kids-v0.9.2-FRESH.apk
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Eva-English-Kids-v0.9.3-FRESH.apk
           AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
           SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
-          "$AAPT" dump badging app/build/outputs/apk/debug/Eva-English-Kids-v0.9.2-FRESH.apk | grep -F "package: name='com.eva.english.kids.fresh092'"
-          "$SIGNER" verify --verbose app/build/outputs/apk/debug/Eva-English-Kids-v0.9.2-FRESH.apk
+          "$AAPT" dump badging app/build/outputs/apk/debug/Eva-English-Kids-v0.9.3-FRESH.apk | grep -F "package: name='com.eva.english.kids.fresh093'"
+          "$SIGNER" verify --verbose app/build/outputs/apk/debug/Eva-English-Kids-v0.9.3-FRESH.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Eva-English-Kids-v0.9.2-FRESH-Android13
-          path: app/build/outputs/apk/debug/Eva-English-Kids-v0.9.2-FRESH.apk
+          name: Eva-English-Kids-v0.9.3-FRESH-Android13
+          path: app/build/outputs/apk/debug/Eva-English-Kids-v0.9.3-FRESH.apk
           if-no-files-found: error
 
