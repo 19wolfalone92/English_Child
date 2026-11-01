@@ -244,6 +244,37 @@ const persistedWord=Object.values(seedState.seedMemory).find(x=>x.stage===2);
 assert.ok(persistedWord.due>Date.now()+2*86400000,'second successful recall is due after three days');
 assert.ok(Object.values(seedState.seedMemory).some(x=>x.stage===2&&x.due>Date.now()+2*86400000));
 view.querySelector('#memory-map').click();
+// A child who misses every word is given a smaller remedial picture quiz,
+// and the island is NOT falsely marked mastered.
+const retryState={seedDone:{},seedMemory:{},xp:0};
+window.KIDS_FIRST_STEPS.open({view,state:retryState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+view.querySelector('#seed-continue').click();
+view.querySelector('#seed-try').click();
+for(let q=0;q<6;q++){
+ if(q===3)view.querySelector('#seed-try').click();
+ const word=window.KIDS_FIRST_STEPS.packs[0].words[q];
+ const mistake=view.querySelectorAll('[data-seed-answer]').find(b=>b.dataset.seedAnswer!==word.id);
+ assert.ok(mistake,'deliberate error choice offered');
+ mistake.click();
+ assert.match(view.querySelector('#seed-feedback').innerHTML,/Вместе научимся!/);
+ view.querySelector('#seed-next').click();
+}
+assert.match(view.innerHTML,/повторим трудные слова/,'missed-word flashcards appear');
+assert.equal(view.querySelectorAll('[data-retry-word]').length,6,'all missed words available to rehearse');
+view.querySelector('#seed-retry-done').click();
+for(let q=0;q<6;q++){
+ const word=window.KIDS_FIRST_STEPS.packs[0].words[q];
+ const choice=view.querySelectorAll('[data-seed-retry-choice]').find(b=>b.dataset.seedRetryChoice===word.id);
+ assert.ok(choice,'correct recognition retest for missed '+word.en);
+ choice.click();
+ assert.match(view.querySelector('#seed-retry-feedback').innerHTML,/Вот теперь ты помнишь!/);
+ view.querySelector('#seed-retry-next').click();
+}
+assert.ok(!retryState.seedDone['seed-01'],'a fully wrong first pass cannot unlock the next island');
+assert.equal(retryState.xp,0,'remedial session cannot farm bonus stars');
+assert.ok(Object.values(retryState.seedMemory).every(v=>v.seen===2),'per-word mistakes and their retry are both recorded');
+view.querySelector('#seed-next-lesson').click();
+assert.equal(view.querySelectorAll('[data-seed-say]').length,3,'friendly retry returns to three picture cards');
 
 vm.runInNewContext(read('app.js'),{
  window,document:doc,localStorage,console,Date,Math,
