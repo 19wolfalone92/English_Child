@@ -50,6 +50,6 @@ jobs:
           "$SIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Eva-English-Kids-v0.5.1-Android13-fresh
+          name: Eva-English-Kids-v0.6.0-Android13
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
