@@ -168,6 +168,13 @@ function launchFirstSounds(){
  if(game?.open)game.open({view,state,save,speak,speakAvailable,identity,onExit:renderHome});
  else renderHome();
 }
+function launchLearningPassport(){
+ session=null;setNav('home');
+ const tool=window.KIDS_LEARNING_PASSPORT;
+ if(tool?.open)tool.open({view,state,save,speak,speakAvailable,identity,
+  onExit:renderFamily,onWords:launchFirstSteps,onMemory:launchWordMemory});
+ else renderFamily();
+}
 function launchTeacherPath(){
  session=null;setNav('home');
  const game=window.KIDS_TEACHER_PATH;
@@ -508,6 +515,7 @@ function renderFamily(){
  view.innerHTML=topHero('👨‍👩‍👧','Прогресс '+child('genitive'),'Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
  `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Первые слова и буквы</h3><p>🌷 Из 20 полянок: ${seedCount}. 🌟 Изучено групп букв: ${Object.keys(state.alphaDone||{}).length}/7. 🧠 Сегодня готовы к повторению: ${window.KIDS_WORD_MEMORY?.due?.(state)?.length||0}. Всего знакомимся со 120 простыми словами до сложных фраз, письма и грамматики. Рекомендуется несколько минут за один раз.</p><h3>Пошаговый маршрут от учителя</h3><p>Для шестилетнего ребёнка: 4 короткие встречи в неделю по 5–10 минут. Два раза узнавать новые слова по тройкам, один раз учить буквы, один раз повторять старые слова и играть с настоящими игрушками. Условные фазы Pre-A1 → A1 → A2 → B1 → B2 не являются автоматическим присвоением уровня: нужны возрастная готовность, речь, письмо и независимая проверка.</p>
  <p>💬 Простых фраз с пониманием: ${Object.keys(state.phraseDone||{}).length}/20. 📖 Мини-сказок: ${Object.keys(state.miniBooks||{}).length}/20. 👂 Звуковых семей: ${Object.keys(state.soundFamilies||{}).length}/8.</p>
+ <button type="button" class="primary full" id="parent-passport">📋 Учебный паспорт Евы — реальные результаты</button>
  <button type="button" class="secondary full" id="parent-teacher">🌈 Показать подробный план занятий</button>
  <h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
  view.querySelector('#toggle-advanced')?.addEventListener('click',()=>{
@@ -515,6 +523,7 @@ function renderFamily(){
   if(!state.advancedContent&&['B1','B2'].includes(state.level))state.level='Pre-A1';
   save();renderFamily();
  });
+ view.querySelector('#parent-passport')?.addEventListener('click',launchLearningPassport);
  view.querySelector('#parent-teacher')?.addEventListener('click',launchTeacherPath);
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();applyTheme();renderFamily();}});
  view.querySelector('#export-progress')?.addEventListener('click',()=>{
