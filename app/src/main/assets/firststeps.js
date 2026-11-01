@@ -101,7 +101,46 @@ function showRetry(){
  ctx.view.querySelectorAll('[data-retry-word]').forEach(b=>b.addEventListener('click',()=>{
   const w=s.wrong.find(x=>x.id===b.dataset.retryWord);if(w)ctx.speak(w.en);
  }));
- ctx.view.querySelector('#seed-retry-done')?.addEventListener('click',()=>finish());
+ ctx.view.querySelector('#seed-retry-done')?.addEventListener('click',()=>{s.retryIndex=0;retryQuestion();});
+}
+function retryQuestion(){
+ const s=lesson;if(!s||s.phase!=='revision')return;
+ if(s.retryIndex>=s.wrong.length){finish();return;}
+ const w=s.wrong[s.retryIndex];
+ const others=s.pack.words.filter(x=>x.id!==w.id);
+ const other=others[Math.floor(Math.random()*others.length)];
+ const options=Math.random()<.5?[w,other]:[other,w];
+ const sound=ctx.speakAvailable();
+ ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="seed-back">← Слова</button>
+  <span class="badge">🌱 Повтор ${s.retryIndex+1}/${s.wrong.length}</span></div>
+  <section class="feature seed-question"><div class="seed-guide"><img src="wolfie.svg" alt=""><span>💗 Я помогу, Ева!</span></div>
+  <h1>Давай вспомним!</h1>
+  ${sound?`<button class="seed-audio" id="seed-retry-hear">🔊 <span>Послушать слово</span></button>`:
+   `<div class="seed-audio fallback" lang="en">${safe(w.en)}<small>Посмотри слово</small></div>`}
+  <div class="seed-choices">${options.map(x=>`<button class="seed-choice" data-seed-retry-choice="${x.id}">
+   <span class="seed-choice-image">${picture(x)}</span><b>${safe(x.ru)}</b></button>`).join('')}</div>
+  <div id="seed-retry-feedback" role="status" aria-live="polite"></div></section>`;
+ ctx.view.querySelector('#seed-back')?.addEventListener('click',showRetry);
+ ctx.view.querySelector('#seed-retry-hear')?.addEventListener('click',()=>ctx.speak(w.en));
+ ctx.view.querySelectorAll('[data-seed-retry-choice]').forEach(button=>button.addEventListener('click',()=>{
+  if(s.answered)return;s.answered=true;
+  const good=button.dataset.seedRetryChoice===w.id;
+  const old=ctx.state.seedMemory?.[w.id]||{seen:0,correct:0,stage:0};
+  const stage=good?Math.min((old.stage||0)+1,5):0;
+  const wait=[0,1,3,7,14,30];
+  ctx.state.seedMemory[w.id]={stage,seen:(old.seen||0)+1,
+   correct:(old.correct||0)+Number(good),due:Date.now()+(good?wait[stage]*86400000:0)};
+  ctx.save();
+  ctx.view.querySelectorAll('[data-seed-retry-choice]').forEach(b=>{
+   b.disabled=true;if(b.dataset.seedRetryChoice===w.id)b.classList.add('good');
+   else if(b===button)b.classList.add('bad');
+  });
+  ctx.view.querySelector('#seed-retry-feedback').innerHTML=`<div class="feedback ${good?'':'retry'}">
+   <strong>${good?'🌸 Вот теперь ты помнишь!':'💞 Не страшно, Ева!'}</strong>
+   <p><b lang="en">${safe(w.en)}</b> — ${safe(w.ru)}</p>
+   <button class="primary" id="seed-retry-next">Дальше →</button></div>`;
+  ctx.view.querySelector('#seed-retry-next')?.addEventListener('click',()=>{s.answered=false;s.retryIndex++;retryQuestion();});
+ }));
 }
 function finish(){
  const s=lesson; if(!s)return;lesson=null;
