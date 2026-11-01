@@ -274,7 +274,7 @@ function renderHome(){
  html+=`<section class="seed-home-entry"><div class="seed-home-top"><span class="seed-home-sticker">🌷 САМОЕ НАЧАЛО</span><span class="seed-home-count">${seedCount}/20</span></div>
  <h2>Мои первые 120 слов</h2><p>20 маленьких полянок с картинками, звуком и добрыми играми. Никаких сложных фраз!</p>
  <button class="primary seed-primary" id="start-seed">▶ ${seedCount===0?'Моё самое первое занятие':seedCount<20?'Продолжить учить слова':'Играть с первыми словами'}</button>
- <div class="seed-home-art"><span>🐱</span><span>🍎</span><span>🌈</span><span>🧸</span></div></section>`;
+ <div class="seed-home-art"><span><img src="first-cat.svg" alt=""></span><span><img src="first-apple.svg" alt=""></span><span>🌈</span><span>🧸</span></div></section>`;
  html+=`<section class="home-stats"><div><strong>⭐ ${state.xp||0}</strong><span>звёздочки</span></div><div><strong>🌸 ${doneCount}</strong><span>уроков</span></div><div><strong>🏅 ${awards.filter(a=>a.earned).length}</strong><span>наклейки</span></div></section>`;
  html+=`<section class="feature home-start" ${seedCount<20?'hidden':''}><div class="section-lead"><h2>🌷 Следующий шаг ${esc(child("genitive"))}</h2><span class="badge">${next?esc(levelNames[modules[next.moduleIndex].level]):'Ура! 🎉'}</span></div>`;
  if(next){
