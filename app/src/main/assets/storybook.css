@@ -192,3 +192,15 @@ p{font-size:15px;line-height:1.55}
  .home-start .primary{min-height:58px;font-size:17px}
  .home-start .child-voice{margin-top:8px;font-size:12px;padding:8px}
 }
+
+/* Larger reward garden: actual illustrated Eva valley and 16 big touch targets. */
+.garden{min-height:422px;padding:123px 13px 24px;background:
+linear-gradient(180deg,#ecfaff0f 0%,#f4fff94b 61%,var(--ui-garden) 100%),
+url('eva-valley.svg') center/cover no-repeat;border:3px solid #fff;box-shadow:0 8px 17px var(--ui-softglow)}
+.garden .garden-hill{display:none}
+.garden-slots{gap:clamp(7px,2.1vw,13px)}
+.garden-slot{min-height:54px;max-height:75px;border:3px dashed var(--ui-primary);
+background:#ffffffd6;box-shadow:0 4px 7px #443d6330, inset 0 2px 4px #fff8;backdrop-filter:blur(2px)}
+.garden-slot.full{background:#fffbd8f0;border:3px solid #eabb54;box-shadow:0 7px 13px #66523545}
+@media(max-width:360px){.garden{padding:98px 8px 16px;min-height:350px}.garden-slot{min-height:49px}}
+@media(min-width:580px){.garden{padding-top:170px;min-height:465px}}
