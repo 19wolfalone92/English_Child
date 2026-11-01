@@ -18,6 +18,12 @@ vm.runInNewContext(read('dialogues.js'),{window},{filename:'dialogues.js'});
 vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{filename:'adventures.js'});
 vm.runInNewContext(read('soundgarden.js'),{window,Date,Math},{filename:'soundgarden.js'});
 vm.runInNewContext(read('firststeps.js'),{window,Date,Math},{filename:'firststeps.js'});
+vm.runInNewContext(read('alphabetquest.js'),{window,Date,Math},{filename:'alphabetquest.js'});
+vm.runInNewContext(read('wordmemory.js'),{window,Date,Math},{filename:'wordmemory.js'});
+assert.equal(window.KIDS_ALPHABET_QUEST.groups.length,7,'alphabet is split into seven gentle small sessions');
+assert.equal(window.KIDS_ALPHABET_QUEST.groups.reduce((n,g)=>n+g.length,0),26,'all letters taught');
+assert.equal(window.KIDS_WORD_MEMORY.intervals.join(','),'0,1,3,7,14,30','spacing schedule');
+
 assert.equal(window.KIDS_FIRST_STEPS.packs.length,20,'20 gentle micro-lessons');
 for(const name of ['cat','dog','sun','apple','ball','mom']){
  assert.ok(read('first-'+name+'.svg').includes('viewBox'),'custom starter illustration exists: '+name);
@@ -170,9 +176,14 @@ for(let i=0;i<20;i++){
  if(i===0)view.querySelector('#seed-continue').click();
  else view.querySelector('#seed-next-lesson').click();
  assert.match(view.innerHTML,/data-seed-say=/,'six picture-word learning cards on lesson '+(i+1));
- assert.equal(view.querySelectorAll('[data-seed-say]').length,6);
+ assert.equal(view.querySelectorAll('[data-seed-say]').length,3,'three starter cards, not six at once');
+
  view.querySelector('#seed-try').click();
  for(let q=0;q<6;q++){
+  if(q===3){
+   assert.equal(view.querySelectorAll('[data-seed-say]').length,3,'the next three new words are introduced before asking questions');
+   view.querySelector('#seed-try').click();
+  }
   const word=window.KIDS_FIRST_STEPS.packs[i].words[q];
   assert.match(view.innerHTML,/Без голоса/,'visible fallback when TTS missing');
   const correct=view.querySelectorAll('[data-seed-answer]').find(b=>b.dataset.seedAnswer===word.id);
@@ -185,7 +196,52 @@ for(let i=0;i<20;i++){
 }
 assert.equal(Object.keys(seedState.seedDone).length,20,'20 islands completed');
 assert.equal(seedState.xp,240,'one-time reward per micro-lesson');
+assert.equal(Object.keys(seedState.seedMemory).length,120,'all first words have separately saved recall history');
+assert.ok(Object.values(seedState.seedMemory).every(x=>x.seen===1&&x.stage===1),'every answer schedules a next-day review');
 view.querySelector('#seed-home').click();
+
+// Letter quest: all 26 uppercase/lowercase recognitions, 7 small learning groups.
+const alphaState={alphaDone:{},alphabetHeard:{},xp:0};
+window.KIDS_ALPHABET_QUEST.open({view,state:alphaState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+assert.match(view.innerHTML,/Буквы для Евы/);
+for(let groupIndex=0;groupIndex<7;groupIndex++){
+ if(groupIndex===0)view.querySelectorAll('[data-alpha-group]')[0].click();
+ else view.querySelector('#alpha-more').click();
+ const group=window.KIDS_ALPHABET_QUEST.groups[groupIndex];
+ assert.equal(view.querySelectorAll('[data-alpha-say]').length,group.length,'letter cards per group '+groupIndex);
+ assert.match(view.innerHTML,/букву/,'letter instruction is shown');
+ view.querySelector('#alpha-try').click();
+ for(let k=0;k<group.length;k++){
+  const chosen=view.querySelectorAll('[data-alpha-answer]').find(b=>b.dataset.alphaAnswer===group[k].letter);
+  assert.ok(chosen,'lowercase / picture answer for '+group[k].letter);
+  chosen.click();
+  assert.match(view.querySelector('#alpha-feedback').innerHTML,/Отлично, Ева!/);
+  view.querySelector('#alpha-next').click();
+ }
+}
+assert.equal(Object.keys(alphaState.alphaDone).length,7);
+assert.equal(alphaState.xp,70,'seven once-only letter achievements');
+view.querySelector('#alpha-all').click();
+
+// Spaced repetition: 8 words are recalled and moved to the next interval.
+for(const key of Object.keys(seedState.seedMemory))seedState.seedMemory[key].due=0;
+assert.equal(window.KIDS_WORD_MEMORY.due(seedState).length,120);
+window.KIDS_WORD_MEMORY.open({view,state:seedState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+view.querySelector('#memory-begin').click();
+for(let i=0;i<8;i++){
+ const target=view.innerHTML.match(/class="seed-audio fallback" lang="en">([^<]+)/)?.[1];
+ const word=allSeed.find(w=>w.en===target);
+ assert.ok(word,'due word visible in no-voice fallback');
+ const chosen=view.querySelectorAll('[data-memory-answer]').find(b=>b.dataset.memoryAnswer===word.id);
+ assert.ok(chosen,'word matching '+word.en);
+ chosen.click();
+ assert.match(view.querySelector('#memory-feedback').innerHTML,/Отличная память!/);
+ view.querySelector('#memory-next').click();
+}
+assert.match(view.innerHTML,/слова становятся знакомее/);
+assert.equal(window.KIDS_WORD_MEMORY.due(seedState).length,112,'eight recalled words deferred to 3 days');
+assert.ok(Object.values(seedState.seedMemory).some(x=>x.stage===2&&x.due>Date.now()+2*86400000));
+view.querySelector('#memory-map').click();
 
 vm.runInNewContext(read('app.js'),{
  window,document:doc,localStorage,console,Date,Math,
