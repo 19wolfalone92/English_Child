@@ -17,6 +17,17 @@ vm.runInNewContext(read('stories.js'),{window},{filename:'stories.js'});
 vm.runInNewContext(read('dialogues.js'),{window},{filename:'dialogues.js'});
 vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{filename:'adventures.js'});
 vm.runInNewContext(read('soundgarden.js'),{window,Date,Math},{filename:'soundgarden.js'});
+vm.runInNewContext(read('firststeps.js'),{window,Date,Math},{filename:'firststeps.js'});
+assert.equal(window.KIDS_FIRST_STEPS.packs.length,20,'20 gentle micro-lessons');
+const allSeed=window.KIDS_FIRST_STEPS.packs.flatMap(p=>p.words);
+assert.equal(allSeed.length,120,'120 easy first words');
+assert.equal(new Set(allSeed.map(w=>w.en)).size,120,'unique first words, no memorizing repeats');
+assert.equal(new Set(allSeed.map(w=>w.id)).size,120);
+for(const p of window.KIDS_FIRST_STEPS.packs){
+ assert.equal(p.words.length,6,'6 words per beginner lesson');
+ for(const word of p.words){assert.ok(word.en.length>1&&word.en.length<=11,'small words only '+word.en);assert.ok(word.ru&&word.icon);}
+}
+
 assert.equal(window.KIDS_SOUND_GARDEN.worlds.length,8,'8 fairy listening worlds');
 assert.equal(window.KIDS_SOUND_GARDEN.worlds.reduce((sum,w)=>sum+w.words.length,0),48,'48 original picture-word matches');
 for(const world of window.KIDS_SOUND_GARDEN.worlds){
@@ -142,6 +153,32 @@ const doc={documentElement:root,addEventListener(){},getElementById(id){return i
  querySelectorAll(sel){return sel==='.bottom button'?buttons:[];}};
 let storage=null;
 const localStorage={getItem:()=>storage,setItem:(_,x)=>{storage=x;}};
+// Complete all 20 preschool micro-lessons in the real DOM harness, including the no-TTS fallback.
+const seedState={seedDone:{},xp:0},seedView=view;
+window.KIDS_FIRST_STEPS.open({
+ view:seedView,state:seedState,save(){},speak(){},speakAvailable(){return false;},onExit(){}
+});
+for(let i=0;i<20;i++){
+ if(i===0)view.querySelector('#seed-continue').click();
+ else view.querySelector('#seed-next-lesson').click();
+ assert.match(view.innerHTML,/data-seed-say=/,'six picture-word learning cards on lesson '+(i+1));
+ assert.equal(view.querySelectorAll('[data-seed-say]').length,6);
+ view.querySelector('#seed-try').click();
+ for(let q=0;q<6;q++){
+  const word=window.KIDS_FIRST_STEPS.packs[i].words[q];
+  assert.match(view.innerHTML,/Без голоса/,'visible fallback when TTS missing');
+  const correct=view.querySelectorAll('[data-seed-answer]').find(b=>b.dataset.seedAnswer===word.id);
+  assert.ok(correct,'correct picture offered '+word.en);
+  correct.click();
+  assert.match(view.querySelector('#seed-feedback').innerHTML,/Молодец, Ева!/);
+  view.querySelector('#seed-next').click();
+ }
+ assert.equal(seedState.seedDone['seed-'+String(i+1).padStart(2,'0')],true);
+}
+assert.equal(Object.keys(seedState.seedDone).length,20,'20 islands completed');
+assert.equal(seedState.xp,240,'one-time reward per micro-lesson');
+view.querySelector('#seed-home').click();
+
 vm.runInNewContext(read('app.js'),{
  window,document:doc,localStorage,console,Date,Math,
  setTimeout(){return 0;},confirm(){return true;},SpeechSynthesisUtterance:function(){}
