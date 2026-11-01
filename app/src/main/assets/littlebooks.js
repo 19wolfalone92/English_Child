@@ -66,11 +66,12 @@ function finish(){
  const r=round;if(!r)return;round=null;
  ctx.state.miniBooks??={};
  const was=ctx.state.miniBooks[r.book.id]===true;
- ctx.state.miniBooks[r.book.id]=true;
- if(!was&&r.correct>=2)ctx.state.xp=(ctx.state.xp||0)+5;
+ const passed=r.correct>=2;
+ if(passed)ctx.state.miniBooks[r.book.id]=true;
+ if(!was&&passed)ctx.state.xp=(ctx.state.xp||0)+5;
  ctx.save();
  ctx.view.innerHTML=`<section class="seed-celebrate"><div class="reading-celebrate" aria-hidden="true">📚✨🌸</div>
- <h1>Ева, сказка закончилась!</h1><p>Ты нашла ${r.correct} из 3 картинок. Теперь можно читать её снова!</p>
+ <h1>${passed?'Ева, сказка закончилась!':'Ева, повторим сказку!'}</h1><p>Ты нашла ${r.correct} из 3 картинок. Теперь можно читать её снова!</p>
  <button class="primary seed-continue" type="button" id="reading-more">📖 Ещё одну сказку</button>
  <button class="secondary full" type="button" id="reading-home">🏡 В домик</button></section>`;
  ctx.view.querySelector('#reading-more')?.addEventListener('click',map);
