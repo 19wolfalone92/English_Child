@@ -11,7 +11,7 @@ const lessons = modules.flatMap((m,i)=>Array.from({length:10},(_,n)=>({id:'day-'
 const lookup = new Map(modules.flatMap(m=>m.items.map(item=>[item.id,item])));
 const view = document.getElementById('view');
 const bridge = window.KidsAndroid || null;
-const fresh = () => ({done:{},items:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1',theme:'lilac',advancedContent:false});
+const fresh = () => ({done:{},items:{},seedDone:{},xp:0,answers:0,correct:0,days:{},level:'Pre-A1',theme:'lilac',advancedContent:false});
 const safeRecord=x=>x && typeof x==='object' && !Array.isArray(x) ? x : {};
 const boundedNumber=(x,max=100000000)=>{
  const n=Number(x);
@@ -30,9 +30,10 @@ function recoverData(x){
  r.days=Object.fromEntries(Object.entries(safeRecord(x.days)).filter(([k])=>/^\d{4}-\d{2}-\d{2}$/.test(k))
   .map(([k,v])=>[k,boundedNumber(v)]));
  r.xp=boundedNumber(x.xp);r.answers=boundedNumber(x.answers);r.correct=Math.min(boundedNumber(x.correct),r.answers);
+ r.seedDone=Object.fromEntries(Object.entries(safeRecord(x.seedDone)).filter(([id,v])=>/^seed-\d{2}$/.test(id)&&v===true));
  r.level=levels.includes(x.level)?x.level:r.level;
  r.advancedContent=x.advancedContent===true;
- r.theme=typeof x.theme==='string'&&['lilac','strawberry','mint','sky','sunshine','rainbow','custom'].includes(x.theme)?x.theme:r.theme;
+ r.theme=typeof x.theme==='string'&&['lilac','strawberry','mint','sky','sunshine','rainbow','midnight','inventor','princess','candy','ocean','berry','custom'].includes(x.theme)?x.theme:r.theme;
  for(const key of ['customPrimary','customAccent']){
   if(typeof x[key]==='string'&&/^#[0-9a-f]{6}$/i.test(x[key]))r[key]=x[key];
  }
@@ -143,6 +144,12 @@ function launchExtra(kind){
  if(!extras||typeof extras[kind]!=='function'){renderPlay();return;}
  extras[kind]({view,state,save,speak,speakHint,speakAvailable,onExit:renderPlay,identity});
 }
+function launchFirstSteps(){
+ session=null;setNav('home');
+ const game=window.KIDS_FIRST_STEPS;
+ if(game&&typeof game.open==='function')game.open({view,state,save,speak,speakAvailable,speakHint,identity,onExit:renderHome});
+ else renderHome();
+}
 function launchSoundGarden(){
  session=null;setNav('play');
  const game=window.KIDS_SOUND_GARDEN;
@@ -171,7 +178,13 @@ const palettes=[
 {id:'mint',name:'🌿 Мята',primary:'#237c76',accent:'#efac5b',bg:'#f1fff8'},
 {id:'sky',name:'🦋 Голубое небо',primary:'#376eb2',accent:'#f2ac7d',bg:'#f3faff'},
 {id:'sunshine',name:'🌻 Солнышко',primary:'#ad5b28',accent:'#f8bd54',bg:'#fffaf0'},
-{id:'rainbow',name:'🌈 Радуга',primary:'#6654bc',accent:'#ed81ad',bg:'#fff9ff'}
+{id:'rainbow',name:'🌈 Радуга',primary:'#6654bc',accent:'#ed81ad',bg:'#fff9ff',icon:'🌈',story:'Радужные сладости'},
+{id:'midnight',name:'🎀 Ночной кавай',primary:'#73469a',accent:'#f6a3d2',bg:'#fcf4ff',icon:'🌙',story:'Бантики, звёзды и луна'},
+{id:'inventor',name:'⚙️ Маленькие изобретатели',primary:'#2475b1',accent:'#ffc656',bg:'#eff9ff',icon:'🤖',story:'Добрые роботы и мастерская'},
+{id:'princess',name:'👑 Сад принцессы',primary:'#a348a7',accent:'#f7aad8',bg:'#fff4fc',icon:'🏰',story:'Замки, цветы и мечты'},
+{id:'candy',name:'🍬 Радужные конфеты',primary:'#b54098',accent:'#ffbc79',bg:'#fff7fc',icon:'🍭',story:'Сладкие цвета'},
+{id:'ocean',name:'🫧 Морская жемчужина',primary:'#177e99',accent:'#95e1e8',bg:'#f0fdff',icon:'🐚',story:'Бирюзовый мир'},
+{id:'berry',name:'🍓 Клубничный домик',primary:'#b83962',accent:'#ffb88c',bg:'#fff6f4',icon:'🍓',story:'Ягодная сказка'}
 ];
 const isHex=h=>/^#[0-9a-f]{6}$/i.test(h);
 const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
@@ -219,7 +232,7 @@ function renderThemeChooser(){
  const p=isHex(state.customPrimary)?state.customPrimary:'#7451b8',a=isHex(state.customAccent)?state.customAccent:'#f1a96b';
  overlay.innerHTML='<div class="theme-sheet" role="dialog" aria-modal="true" aria-labelledby="theme-title" tabindex="-1">'+
  '<div class="section-lead"><h2 id="theme-title">🎨 Мои цвета</h2><span class="badge">Волшебная палитра</span></div><p>Выбери любимое настроение. Цвета останутся даже после закрытия приложения!</p>'+
- '<div class="theme-grid">'+palettes.map(x=>'<button type="button" data-palette="'+x.id+'" class="theme-choice '+((state.theme||'lilac')===x.id?'selected':'')+'" aria-pressed="'+((state.theme||'lilac')===x.id)+'"><span class="theme-swatches"><i style="background:'+x.primary+'"></i><i style="background:'+x.accent+'"></i><i style="background:'+x.bg+'"></i></span><b>'+x.name+'</b></button>').join('')+'</div>'+
+ '<div class="theme-grid">'+palettes.map(x=>'<button type="button" data-palette="'+x.id+'" class="theme-choice '+((state.theme||'lilac')===x.id?'selected':'')+'" aria-pressed="'+((state.theme||'lilac')===x.id)+'"><span class="theme-art" style="--theme-preview:'+x.primary+';--theme-accent:'+x.accent+'">☁️ '+(x.icon||'✨')+'</span><span class="theme-swatches"><i style="background:'+x.primary+'"></i><i style="background:'+x.accent+'"></i><i style="background:'+x.bg+'"></i></span><b>'+x.name+'</b><small>'+(x.story||'Нежная цветовая палитра')+'</small></button>').join('')+'</div>'+
  '<div class="theme-custom"><h3>✨ Придумай свои цвета!</h3><div class="theme-pickers">'+
  '<label>Главный цвет<input id="custom-main" type="color" value="'+p+'" aria-label="Выбери основной цвет"></label>'+
  '<label>Цвет волшебства<input id="custom-accent" type="color" value="'+a+'" aria-label="Выбери дополнительный цвет"></label></div>'+
@@ -253,12 +266,17 @@ function renderParentGate(){
 
 function renderHome(){
  session=null;setNav('home');
+ const seedCount=Object.keys(state.seedDone||{}).length;
  const next=nextLesson(),doneCount=passedCount(),awards=achievements();
  const current=next?next.index:299;
  const startAt=Math.max(0,Math.min(current-2,lessons.length-6));
  let html=`<section class="hero home-welcome"><div class="welcome-copy"><div class="eyebrow">✨ ПРИКЛЮЧЕНИЯ С ВУЛФИ</div><h1>Привет,<br>${esc(child("name"))}!</h1><p>${esc(child("name"))}, пойдём играть и открывать английский?</p></div><img class="wolfie-home" src="wolfie.svg" alt="Вулфи — добрый волчонок с бантиком"><span class="welcome-sparkle one">✨</span><span class="welcome-sparkle two">✦</span></section>`;
+ html+=`<section class="seed-home-entry"><div class="seed-home-top"><span class="seed-home-sticker">🌷 САМОЕ НАЧАЛО</span><span class="seed-home-count">${seedCount}/20</span></div>
+ <h2>Мои первые 120 слов</h2><p>20 маленьких полянок с картинками, звуком и добрыми играми. Никаких сложных фраз!</p>
+ <button class="primary seed-primary" id="start-seed">▶ ${seedCount===0?'Моё самое первое занятие':seedCount<20?'Продолжить учить слова':'Играть с первыми словами'}</button>
+ <div class="seed-home-art"><span><img src="first-cat.svg" alt=""></span><span><img src="first-apple.svg" alt=""></span><span>🌈</span><span>🧸</span></div></section>`;
  html+=`<section class="home-stats"><div><strong>⭐ ${state.xp||0}</strong><span>звёздочки</span></div><div><strong>🌸 ${doneCount}</strong><span>уроков</span></div><div><strong>🏅 ${awards.filter(a=>a.earned).length}</strong><span>наклейки</span></div></section>`;
- html+=`<section class="feature home-start"><div class="section-lead"><h2>🌷 Следующий шаг ${esc(child("genitive"))}</h2><span class="badge">${next?esc(levelNames[modules[next.moduleIndex].level]):'Ура! 🎉'}</span></div>`;
+ html+=`<section class="feature home-start" ${seedCount<20?'hidden':''}><div class="section-lead"><h2>🌷 Следующий шаг ${esc(child("genitive"))}</h2><span class="badge">${next?esc(levelNames[modules[next.moduleIndex].level]):'Ура! 🎉'}</span></div>`;
  if(next){
   const m=modules[next.moduleIndex];
   html+=`<div class="next"><span class="big-emoji">${m.emoji}</span><div><strong>${esc(m.title)}</strong><p class="level-pill">Занятие ${next.index+1} · ${esc(modes[next.day-1])}</p></div></div><button class="primary" id="continue">${state.activeCourse?.lessonIndex===next.index?'▶ Продолжить занятие':'▶ Играть и учиться'}</button>`;
@@ -271,12 +289,13 @@ function renderHome(){
  '<button type="button" class="map-bubble garden" id="world-garden"><span class="map-emoji">🌸</span>Сад Евы</button>'+
  '</div><p class="magic-map-footer">🌈 Выбери домик или полянку. Все дорожки безопасные и работают без интернета!</p></section>';
 html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("name"))+' и Вулфи</h2><span class="badge">Выбирай!</span></div><div class="quest-shortcuts">'+
- '<button type="button" class="quest-shortcut" id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+
+ '<button type="button" class="quest-shortcut" id="first-home"><span>🐾</span><b>Первые слова</b><small>120 слов с нуля</small></button>'+ 
+ '<button type="button" class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="stories-home"><span>📚</span><b>Сказки</b><small>Читать и слушать</small></button>'+  
  '<button type="button" class="quest-shortcut" id="pictures-home"><span>🎨</span><b>Картинки</b><small>Угадывать слова</small></button>'+
  '<button type="button" class="quest-shortcut" id="sound-home"><span>🎧</span><b>Звуковой лес</b><small>48 знакомых слов</small></button>'+
- '<button type="button" class="quest-shortcut" id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+
+ '<button type="button" class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="dialogues-home"><span>🗣️</span><b>Говорим</b><small>Выбрать ответ</small></button>'+ 
  '<button type="button" class="quest-shortcut" id="memory-home"><span>🎴</span><b>Пары</b><small>Играть и помнить</small></button></div></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><div class="section-lead"><h2>🗺️ Карта '+esc(child("genitive"))+'</h2><span class="badge">'+doneCount+'/300</span></div><p class="route-hint">Пройди по волшебной тропинке. 🌸 — уже пройдено, ⭐ — следующий шаг!</p><div class="route-track">';
  for(const l of lessons.slice(startAt,startAt+6)){
   const isDone=passed(l.id),available=openLesson(l);
   html+=`<button type="button" class="route-stop ${isDone?'complete':available?'ready':''}" data-hop="${l.index}" ${available?'':'disabled'} aria-label="Урок ${l.index+1}: ${esc(l.title)}"><span class="route-icon">${isDone?'🌸':available?'⭐':'☁️'}</span><b>Шаг ${l.index+1}</b><small>${isDone?'Пройдено':available?'Играть':'Позже'}</small></button>`;
@@ -296,15 +315,17 @@ html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("n
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Азбука с картинками</h2><p>Потрогай буквы и послушай слова!</p></div><button class="secondary" type="button" id="alphabet">🔊 Буквы A–Z</button></section>';
  html+='<section class="feature"><div class="section-lead"><h2>🏅 Награды '+esc(child("genitive"))+'</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/8</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
  view.innerHTML=html;
+ view.querySelector('#start-seed')?.addEventListener('click',launchFirstSteps);
  view.querySelector('#continue')?.addEventListener('click',()=>next&&start(next.index));
  view.querySelector('#home-voice')?.addEventListener('click',()=>speakHint('Привет, '+child('name')+'! Я волчонок Вулфи. Давай вместе учить английский! Нажми на большую кнопку, чтобы начать урок. Или выбери игру ниже.'));
  view.querySelector('#home-game')?.addEventListener('click',renderPlay);
  view.querySelector('#alphabet')?.addEventListener('click',renderAlphabet);
- view.querySelector('#world-lesson')?.addEventListener('click',()=>next&&start(next.index));
+ view.querySelector('#world-lesson')?.addEventListener('click',()=>{if(seedCount<20)launchFirstSteps();else next&&start(next.index);});
  view.querySelector('#world-sound')?.addEventListener('click',launchSoundGarden);
  view.querySelector('#world-stories')?.addEventListener('click',()=>launchExtra('openStories'));
  view.querySelector('#world-garden')?.addEventListener('click',renderRewards);
  view.querySelector('#sound-home')?.addEventListener('click',launchSoundGarden);
+ view.querySelector('#first-home')?.addEventListener('click',launchFirstSteps);
  view.querySelector('#stories-home')?.addEventListener('click',()=>launchExtra('openStories'));
  view.querySelector('#dialogues-home')?.addEventListener('click',()=>launchExtra('openDialogues'));
  view.querySelector('#memory-home')?.addEventListener('click',()=>launchExtra('openMemory'));
@@ -328,22 +349,24 @@ function renderAlphabet(){
 }
 function renderPlay(){
  session=null;setNav('play');
+ const seedCount=Object.keys(state.seedDone||{}).length;
  if(!state.advancedContent&&['B1','B2'].includes(state.level)){
   state.level='Pre-A1';save();
  }
  let html=topHero('🎲',child('name')+', давай играть!','Какую игру выберем? Просто нажми на большую картинку!');
  html+='<section class="feature"><div class="section-lead"><h2>🎮 Выбери игру</h2><span class="badge">5 игр</span></div><div class="quest-shortcuts">'+
- '<button class="quest-shortcut" id="sound-play-game"><span>🎧</span><b>Звуковой лес</b><small>Слушай и находи</small></button>'+
+ '<button class="quest-shortcut" id="seed-play-game"><span>🐾</span><b>Мои первые 120 слов</b><small>Начать совсем с нуля</small></button>'+ 
+ '<button class="quest-shortcut" id="sound-play-game"><span>🎧</span><b>Звуковой лес</b><small>Слушай и находи</small></button>'+ 
  '<button class="quest-shortcut" id="pictures-play"><span>🖼️</span><b>Угадай картинку</b><small>Для самых маленьких</small></button>'+
  '<button class="quest-shortcut" id="memory-play"><span>🎴</span><b>Найди пару</b><small>Играй со словами</small></button>'+
- '<button class="quest-shortcut" id="stories-play"><span>📚</span><b>Сказки</b><small>Читаем вместе</small></button>'+
- '<button class="quest-shortcut" id="dialogues-play"><span>🗣️</span><b>Поболтаем</b><small>Выбирай ответ</small></button></div></section>';
+ '<button class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="stories-play"><span>📚</span><b>Сказки</b><small>Читаем вместе</small></button>'+ 
+ '<button class="quest-shortcut" '+(seedCount<5?'hidden':'')+' id="dialogues-play"><span>🗣️</span><b>Поболтаем</b><small>Выбирай ответ</small></button></div></section>';
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Волшебные буквы</h2><p>A, B, C… Каждую можно послушать!</p></div><button type="button" class="secondary" id="alphabet">🔊 Азбука →</button></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🌼 Повторим?</h2><span class="badge">Для памяти</span></div><p>Знакомые слова возвращаются, чтобы ты их не забыла.</p><button type="button" class="secondary full" id="review-play">🧠 Повторять слова</button></section>';
- html+='<section class="feature"><h2>🧚 Выбери свой мир</h2><p>Начни с первых слов. Другие ступени подрастут вместе с тобой!</p><div class="level-buttons">';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><div class="section-lead"><h2>🌼 Повторим?</h2><span class="badge">Для памяти</span></div><p>Знакомые слова возвращаются, чтобы ты их не забыла.</p><button type="button" class="secondary full" id="review-play">🧠 Повторять слова</button></section>';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><h2>🧚 Выбери свой мир</h2><p>Начни с первых слов. Другие ступени подрастут вместе с тобой!</p><div class="level-buttons">';
  html+=levels.filter(l=>state.advancedContent||!['B1','B2'].includes(l)).map(l=>`<button class="level-button ${state.level===l?'active':''}" data-level="${l}">${esc(l)}<br><small>${esc(levelNames[l])}</small></button>`).join('');
  html+='</div></section>';
- html+='<section class="feature"><h2>🐾 Мои темы</h2><div class="play-grid">';
+ html+='<section class="feature" '+(seedCount<20?'hidden':'')+'><h2>🐾 Мои темы</h2><div class="play-grid">';
  for(const [i,m] of modules.entries()){
   if(m.level!==state.level)continue;
   html+=`<button class="play-card" data-free="${i}"><span class="big-emoji">${m.emoji}</span><strong>${esc(m.title)}</strong><small>Играй со словами</small></button>`;
@@ -355,6 +378,7 @@ function renderPlay(){
  view.querySelector('#dialogues-play')?.addEventListener('click',()=>launchExtra('openDialogues'));
  view.querySelector('#memory-play')?.addEventListener('click',()=>launchExtra('openMemory'));
  view.querySelector('#pictures-play')?.addEventListener('click',()=>launchExtra('openPictures'));
+ view.querySelector('#seed-play-game')?.addEventListener('click',launchFirstSteps);
  view.querySelector('#sound-play-game')?.addEventListener('click',launchSoundGarden);
  view.querySelector('#review-play')?.addEventListener('click',renderReview);
  view.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>{if(!state.advancedContent&&['B1','B2'].includes(b.dataset.level))return;state.level=b.dataset.level;save();renderPlay();}));
@@ -409,11 +433,11 @@ function renderReview(){
 }
 function renderFamily(){
  session=null;setNav('home');
- const count=passedCount(),accuracy=state.answers?Math.round((state.correct||0)/state.answers*100):0;
+ const count=passedCount(),seedCount=Object.keys(state.seedDone||{}).length,accuracy=state.answers?Math.round((state.correct||0)/state.answers*100):0;
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Прогресс '+child('genitive'),'Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
+ `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Для начала — первые слова Евы</h3><p>🌷 Из 20 полянок: ${seedCount}. Всего знакомимся со 120 простыми словами до сложных фраз, письма и грамматики. Рекомендуется несколько минут за один раз.</p><h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
  view.querySelector('#toggle-advanced')?.addEventListener('click',()=>{
   state.advancedContent=!state.advancedContent;
   if(!state.advancedContent&&['B1','B2'].includes(state.level))state.level='Pre-A1';

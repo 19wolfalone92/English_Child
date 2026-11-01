@@ -25,6 +25,14 @@ for(const cssName of styles){
  }
 }
 const scene=file('eva-valley.svg'),character=file('wolfie.svg');
+const starterNames=['cat','dog','sun','apple','ball','mom'];
+for(const w of starterNames){
+ const illustration=file('first-'+w+'.svg');
+ assert.ok(illustration.startsWith('<svg '),'real offline SVG illustration '+w);
+ const safeMarkup=illustration.replace('http://www.w3.org/2000/svg','');
+ for(const bad of ['<script','https://','http://','onload=','<foreignObject'])
+  assert.ok(!safeMarkup.includes(bad),'unsafe external or executable content in beginner art '+w);
+}
 for(const [name,svg] of [['landscape',scene],['character',character]]){
  assert.match(svg,/<svg\s[^>]*viewBox=/,'scalable SVG '+name);
  assert.doesNotMatch(svg,/<script\b|<foreignObject\b|onload=|href=["']https?:|<image\b/i,'no remote or executable SVG content '+name);
@@ -36,7 +44,7 @@ const gradle=fs.readFileSync(path.join(base,'../../../build.gradle'),'utf8');
 assert.match(gradle,/applicationId 'com\.eva\.english\.kids'/,'Android 13 fresh-install application ID');
 assert.match(gradle,/minSdk 24/,'Android 13 supported by minSdk 24');
 assert.match(gradle,/targetSdk 35/,'newer Android supported');
-assert.match(gradle,/versionCode 7/,'higher version for diagnostic variant');
+assert.match(gradle,/versionCode 8/,'new preschool build version');
 const manifest=fs.readFileSync(path.join(base,'../AndroidManifest.xml'),'utf8');
 assert.match(manifest,/android:name="com\.wolfie\.kids\.MainActivity"/,'explicit launchable class under the original Java namespace');
 assert.match(manifest,/android:allowBackup="false"/);
