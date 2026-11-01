@@ -21,6 +21,16 @@ vm.runInNewContext(read('firststeps.js'),{window,Date,Math},{filename:'firststep
 vm.runInNewContext(read('alphabetquest.js'),{window,Date,Math},{filename:'alphabetquest.js'});
 vm.runInNewContext(read('wordmemory.js'),{window,Date,Math},{filename:'wordmemory.js'});
 vm.runInNewContext(read('teacherpath.js'),{window,Date,Math},{filename:'teacherpath.js'});
+vm.runInNewContext(read('littlebooks.js'),{window,Date,Math},{filename:'littlebooks.js'});
+vm.runInNewContext(read('firstsounds.js'),{window,Date,Math},{filename:'firstsounds.js'});
+assert.equal(window.KIDS_MINI_READERS.books.length,20,'20 new three-panel early readers');
+assert.equal(window.KIDS_MINI_READERS.books.flatMap(b=>b.pages).length,60,'60 original beginner panels');
+assert.equal(window.KIDS_FIRST_SOUNDS.groups.length,8,'8 early sound families');
+for(const g of window.KIDS_FIRST_SOUNDS.groups){
+ assert.equal(g.words.length,3,'3 examples per beginning sound');
+ for(const w of g.words)assert.equal(w[0][0].toUpperCase(),g.letter,'correct English initial sound family '+w[0]);
+}
+
 assert.equal(window.KIDS_TEACHER_PATH.plans.length,20,'20 week-specific parent scripts');
 assert.equal(window.KIDS_TEACHER_PATH.milestones.length,6,'start through B2 milestones');
 assert.equal(window.KIDS_TEACHER_PATH.weekPlan.length,4,'four short learning sessions each week');
@@ -231,6 +241,66 @@ for(let i=0;i<20;i++){
 }
 assert.equal(Object.keys(teacherState.phraseDone).length,20);
 assert.equal(teacherState.xp,60,'20 listening achievements once each');
+// New child-friendly picture stories open only after the relevant six words have been learnt.
+const bookState={seedDone:{},miniBooks:{},xp:0};
+window.KIDS_MINI_READERS.open({view,state:bookState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+assert.equal(view.querySelectorAll('[data-mini-book]').length,20);
+view.querySelectorAll('[data-mini-book]')[0].click();
+assert.match(view.innerHTML,/Сказки-картинки Евы/,'locked book cannot open before its words');
+for(let i=0;i<20;i++){
+ const pack=window.KIDS_FIRST_STEPS.packs[i],book=window.KIDS_MINI_READERS.books[i];
+ bookState.seedDone[pack.id]=true;
+ window.KIDS_MINI_READERS.open({view,state:bookState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+ view.querySelectorAll('[data-mini-book]')[i].click();
+ for(let step=0;step<3;step++){
+  assert.match(view.innerHTML,/data-reading-choice/,'two familiar picture choices on story page');
+  assert.equal(view.querySelectorAll('[data-reading-choice]').length,2);
+  const target=pack.words[book.pages[step].index];
+  assert.ok(book.pages[step].en.toLowerCase().includes(target.en),'target actually mentioned in story '+book.id);
+  const match=view.querySelectorAll('[data-reading-choice]').find(b=>b.dataset.readingChoice===target.id);
+  assert.ok(match,'correct story answer '+target.en);
+  match.click();
+  assert.match(view.querySelector('#reading-result').innerHTML,/Ты поняла, Ева!/);
+  view.querySelector('#reading-next').click();
+ }
+ assert.equal(bookState.miniBooks[book.id],true);
+ view.querySelector('#reading-more').click();
+}
+assert.equal(Object.keys(bookState.miniBooks).length,20,'all twenty original books completed');
+assert.equal(bookState.xp,100,'20 first-time reading rewards only');
+window.KIDS_MINI_READERS.open({view,state:bookState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+view.querySelectorAll('[data-mini-book]')[0].click();
+for(let i=0;i<3;i++){
+ const target=window.KIDS_FIRST_STEPS.packs[0].words[i];
+ view.querySelectorAll('[data-reading-choice]').find(b=>b.dataset.readingChoice===target.id).click();
+ view.querySelector('#reading-next').click();
+}
+assert.equal(bookState.xp,100,'rereading does not allow reward farming');
+view.querySelector('#reading-home').click();
+
+// Beginner sound families use whole-word listening and varied picture distractors.
+const soundsState={soundFamilies:{},xp:0};
+window.KIDS_FIRST_SOUNDS.open({view,state:soundsState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+assert.equal(view.querySelectorAll('[data-soundfamily]').length,8);
+for(let groupIndex=0;groupIndex<8;groupIndex++){
+ window.KIDS_FIRST_SOUNDS.open({view,state:soundsState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+ view.querySelectorAll('[data-soundfamily]')[groupIndex].click();
+ assert.match(view.innerHTML,/Послушай семью/);
+ view.querySelector('#soundfamily-go').click();
+ const group=window.KIDS_FIRST_SOUNDS.groups[groupIndex];
+ for(let k=0;k<3;k++){
+  const opts=view.querySelectorAll('[data-family-answer]');
+  assert.equal(opts.length,2);
+  const right=opts.find(x=>x.dataset.familyAnswer===group.words[k][0]);
+  assert.ok(right,'valid initial-sound matching word '+group.words[k][0]);
+  right.click();
+  assert.match(view.querySelector('#soundfamily-result').innerHTML,/Молодец, Ева!/);
+  view.querySelector('#soundfamily-next').click();
+ }
+ assert.equal(soundsState.soundFamilies['sound-'+groupIndex],true);
+}
+assert.equal(Object.keys(soundsState.soundFamilies).length,8);
+assert.equal(soundsState.xp,48,'one-time rewards for eight sound families');
 // Letter quest: all 26 uppercase/lowercase recognitions, 7 small learning groups.
 const alphaState={alphaDone:{},alphabetHeard:{},xp:0};
 window.KIDS_ALPHABET_QUEST.open({view,state:alphaState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
@@ -325,6 +395,8 @@ vm.runInNewContext(read('app.js'),{
 },{filename:'app.js'});
 
 assert.match(view.innerHTML,/Привет,<br>Ева!/);
+assert.match(view.innerHTML,/mini-readers-home/,'picture books accessible from home');
+assert.match(view.innerHTML,/first-sounds-home/,'early sound games accessible from home');
 assert.equal(get('brand-title').textContent,'Eva English Kids');
 assert.match(get('brand-subtitle').textContent,/Ева/);
 assert.match(doc.title,/Евы/);
