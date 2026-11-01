@@ -57,7 +57,7 @@ function recoverData(x){
  r.gameWins=Object.fromEntries(Object.entries(safeRecord(x.gameWins)).filter(([key])=>key.length<60)
   .map(([key,v])=>[key,boundedNumber(v)]));
  r.alphabetHeard=Object.fromEntries(Object.entries(safeRecord(x.alphabetHeard)).filter(([key,v])=>/^[A-Z]$/.test(key)&&v===true));
- r.garden=Array.isArray(x.garden)?x.garden.slice(0,8).map(v=>typeof v==='string'&&v.length<12?v:''):[];
+ r.garden=Array.isArray(x.garden)?x.garden.slice(0,16).map(v=>typeof v==='string'&&v.length<12?v:''):[];
  r.chosenSticker=typeof x.chosenSticker==='string'&&x.chosenSticker.length<12?x.chosenSticker:null;
  const a=safeRecord(x.activeCourse);
  if(Number.isInteger(a.lessonIndex)&&a.lessonIndex>=0&&a.lessonIndex<300 &&
@@ -211,6 +211,11 @@ function achievements(){
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  const letters=Object.keys(state.alphabetHeard||{}).length;
  return [
+  {emoji:'🌷',name:'Первая полянка',earned:Object.values(state.seedDone||{}).some(v=>v===true),detail:'Первые шесть слов'},
+  {emoji:'🌈',name:'Маленький исследователь',earned:Object.values(state.seedDone||{}).filter(v=>v===true).length>=3,detail:'Три островка слов'},
+  {emoji:'🅰️',name:'Первая азбука',earned:state.alphaDone?.['letters-0']===true,detail:'Буквы A–D'},
+  {emoji:'📖',name:'Первая сказка',earned:Object.values(state.miniBooks||{}).some(v=>v===true),detail:'Первая мини-книжка'},
+  {emoji:'🦊',name:'Звуковой детектив',earned:Object.values(state.soundFamilies||{}).some(v=>v===true),detail:'Первая семья звуков'},
   {emoji:'🔤',name:'Открыватель букв',earned:letters===26,detail:letters+'/26 букв'},
   {emoji:'👣',name:'Первый шаг',earned:passed('day-001'),detail:'Первое занятие'},
   {emoji:'🎨',name:'Художник',earned:Object.values(state.pictureWins||{}).some(x=>x>=6),detail:'Игра с картинками'},
@@ -374,7 +379,7 @@ html+='<section class="feature"><div class="section-lead"><h2>✨ '+esc(child("n
  }
  html+='</details></section>';
  html+='<section class="feature alphabet-banner"><div><h2>🔤 Азбука с картинками</h2><p>Потрогай буквы и послушай слова!</p></div><button class="secondary" type="button" id="alphabet">🔊 Буквы A–Z</button></section>';
- html+='<section class="feature"><div class="section-lead"><h2>🏅 Награды '+esc(child("genitive"))+'</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/8</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
+ html+='<section class="feature"><div class="section-lead"><h2>🏅 Награды '+esc(child("genitive"))+'</h2><span class="badge">'+awards.filter(a=>a.earned).length+'/'+awards.length+'</span></div><p>Собирай наклейки и украшай полянку!</p><button class="secondary full" type="button" id="rewards-home">🌼 Посмотреть награды →</button></section>';
  view.innerHTML=html;
  view.querySelector('#start-seed')?.addEventListener('click',launchFirstSteps);
  view.querySelector('#mini-readers-home')?.addEventListener('click',launchMiniReaders);
@@ -465,10 +470,10 @@ function renderRewards(){
  const awards=achievements(),earned=awards.filter(a=>a.earned),picked=state.chosenSticker;
  const allowed=new Set(earned.map(a=>a.emoji));
  if(!allowed.has(picked))state.chosenSticker=earned[0]?.emoji||null;
- const garden=Array.isArray(state.garden)?state.garden.slice(0,8):[];
+ const garden=Array.isArray(state.garden)?state.garden.slice(0,16):[];
  let html=topHero('🎁','Волшебный сад '+child('genitive'),'Собирай добрые награды и укрась свою полянку, '+child('name')+'!');
- html+=`<section class="feature"><div class="section-lead"><h2>🌼 Полянка ${esc(child("genitive"))}</h2><span class="badge">${earned.length}/8 наклеек</span></div><p>${earned.length?'Выбери цветную наклейку, а потом нажми на место в саду.':'Сначала поиграй и узнай новые слова — появятся первые наклейки!'}</p><div class="garden"><div class="garden-hill"></div><div class="garden-slots">`;
- for(let i=0;i<8;i++){
+ html+=`<section class="feature"><div class="section-lead"><h2>🌼 Полянка ${esc(child("genitive"))}</h2><span class="badge">${earned.length}/${awards.length} наклеек</span></div><p>${earned.length?'Выбери цветную наклейку, а потом нажми на место в саду.':'Сначала поиграй и узнай новые слова — появятся первые наклейки!'}</p><div class="garden"><div class="garden-hill"></div><div class="garden-slots">`;
+ for(let i=0;i<16;i++){
   const emoji=allowed.has(garden[i])?garden[i]:'';
   html+=`<button type="button" class="garden-slot ${emoji?'full':''}" data-garden-slot="${i}" aria-label="Место ${i+1}: ${emoji?'украшено '+emoji:'пустое'}">${emoji||'✧'}</button>`;
  }
@@ -513,7 +518,7 @@ function renderFamily(){
  const read=Object.values(state.storyScores||{}).filter(x=>x.best>=2).length;
  const talks=Object.values(state.dialogueScores||{}).filter(x=>x.best>=2).length;
  view.innerHTML=topHero('👨‍👩‍👧','Прогресс '+child('genitive'),'Приложение без регистрации, рекламы, социальных функций и доступа к интернету.')+
- `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из 8.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Первые слова и буквы</h3><p>🌷 Из 20 полянок: ${seedCount}. 🌟 Изучено групп букв: ${Object.keys(state.alphaDone||{}).length}/7. 🧠 Сегодня готовы к повторению: ${window.KIDS_WORD_MEMORY?.due?.(state)?.length||0}. Всего знакомимся со 120 простыми словами до сложных фраз, письма и грамматики. Рекомендуется несколько минут за один раз.</p><h3>Пошаговый маршрут от учителя</h3><p>Для шестилетнего ребёнка: 4 короткие встречи в неделю по 5–10 минут. Два раза узнавать новые слова по тройкам, один раз учить буквы, один раз повторять старые слова и играть с настоящими игрушками. Условные фазы Pre-A1 → A1 → A2 → B1 → B2 не являются автоматическим присвоением уровня: нужны возрастная готовность, речь, письмо и независимая проверка.</p>
+ `<section class="feature"><h2>Как занимается ${esc(child('name'))}?</h2><div class="home-stats"><div><strong>${count}</strong><span>завершено</span></div><div><strong>${accuracy}%</strong><span>ответы</span></div><div><strong>${Object.keys(state.items).length}</strong><span>фраз встречено</span></div></div><p>📚 Прочитанные истории: ${read}/15. 🗣️ Диалоги: ${talks}/10.</p><p>🏅 Получено наград: ${achievements().filter(x=>x.earned).length} из ${achievements().length}.</p><h3>О важном</h3><p>Путь Pre-A1 → B2 — учебная структура, а не автоматическое присвоение уровня. Для подтверждения B1/B2 нужны самостоятельные тексты, диалоги, чтение и внешнее оценивание.</p><p>Чтение с вопросами, упражнения на выбор реплик и игра в пары доступны отдельно. Слушание использует синтез речи устройства. В приложении нет распознавания произношения: устные задания проверяет взрослый. Письменные творческие задания тоже требуют обратной связи.</p><h3>Первые слова и буквы</h3><p>🌷 Из 20 полянок: ${seedCount}. 🌟 Изучено групп букв: ${Object.keys(state.alphaDone||{}).length}/7. 🧠 Сегодня готовы к повторению: ${window.KIDS_WORD_MEMORY?.due?.(state)?.length||0}. Всего знакомимся со 120 простыми словами до сложных фраз, письма и грамматики. Рекомендуется несколько минут за один раз.</p><h3>Пошаговый маршрут от учителя</h3><p>Для шестилетнего ребёнка: 4 короткие встречи в неделю по 5–10 минут. Два раза узнавать новые слова по тройкам, один раз учить буквы, один раз повторять старые слова и играть с настоящими игрушками. Условные фазы Pre-A1 → A1 → A2 → B1 → B2 не являются автоматическим присвоением уровня: нужны возрастная готовность, речь, письмо и независимая проверка.</p>
  <p>💬 Простых фраз с пониманием: ${Object.keys(state.phraseDone||{}).length}/20. 📖 Мини-сказок: ${Object.keys(state.miniBooks||{}).length}/20. 👂 Звуковых семей: ${Object.keys(state.soundFamilies||{}).length}/8.</p>
  <button type="button" class="primary full" id="parent-passport">📋 Учебный паспорт Евы — реальные результаты</button>
  <button type="button" class="secondary full" id="parent-teacher">🌈 Показать подробный план занятий</button>
