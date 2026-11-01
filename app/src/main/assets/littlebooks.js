@@ -36,24 +36,31 @@ function question(){
  const other=pack.words[(page.index+1)%3];
  const options=r.step%2===0?[w,other]:[other,w];
  const audio=ctx.speakAvailable();
- r.answered=false;
+ r.answered=false;r.ready=false;
  ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" type="button" id="reading-to-shelf">← Библиотека</button>
  <span class="badge">📖 ${r.step+1}/3</span><span>⭐ ${r.correct}</span></div>
  <div class="bar"><i style="width:${Math.round(r.step/3*100)}%"></i></div>
  <section class="reading-page"><span class="reading-page-number">🌷 ${esc(r.book.title)}</span>
- <div class="reading-scene" aria-hidden="true">${picture(w)}<span class="reading-glitter">✨</span></div>
+ <div id="reading-learning"><div class="reading-scene" aria-hidden="true">${picture(w)}<span class="reading-glitter">✨</span></div>
  <div class="reading-text" lang="en">${esc(page.en)}</div>
  <button type="button" class="reading-sound" id="reading-play" ${audio?'':'disabled'}>🔊 ${audio?'Послушать страничку':'Голос недоступен'}</button>
  <details class="reading-translation"><summary>👨‍👩‍👧 Подсказка взрослому</summary><p>${esc(page.ru)}</p></details>
- <h2>Найди ${esc(w.ru)}!</h2>
+ <button type="button" class="primary reading-ready" id="reading-ready">🧠 Закрыть страничку и вспомнить!</button></div>
+ <div id="reading-check" hidden><h2>Что было в истории? Покажи картинку!</h2>
+ <p class="reading-recall-hint">Вспомни английскую фразу, не подсматривая в картинку.</p>
  <div class="reading-options">${options.map(x=>`<button type="button" class="reading-answer" data-reading-choice="${esc(x.id)}"><span class="reading-option-image" aria-hidden="true">${picture(x)}</span><b>${esc(x.ru)}</b></button>`).join('')}</div>
- <div id="reading-result" role="status" aria-live="polite"></div></section>`;
+ <div id="reading-result" role="status" aria-live="polite"></div></div></section>`;
  ctx.view.querySelector('#reading-to-shelf')?.addEventListener('click',map);
  ctx.view.querySelector('#reading-play')?.addEventListener('click',()=>ctx.speak(page.en));
+ ctx.view.querySelector('#reading-ready')?.addEventListener('click',()=>{
+  r.ready=true;
+  ctx.view.querySelector('#reading-learning').hidden=true;
+  ctx.view.querySelector('#reading-check').hidden=false;
+ });
  ctx.view.querySelectorAll('[data-reading-choice]').forEach(b=>b.addEventListener('click',()=>choose(b,w,page)));
 }
 function choose(b,w,page){
- const r=round;if(!r||r.answered)return;r.answered=true;
+ const r=round;if(!r||r.answered||!r.ready)return;r.answered=true;
  const good=b.dataset.readingChoice===w.id;if(good)r.correct++;
  ctx.view.querySelectorAll('[data-reading-choice]').forEach(x=>{
   x.disabled=true;if(x.dataset.readingChoice===w.id)x.classList.add('good');else if(x===b)x.classList.add('bad');
