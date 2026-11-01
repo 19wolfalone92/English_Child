@@ -244,6 +244,18 @@ const persistedWord=Object.values(seedState.seedMemory).find(x=>x.stage===2);
 assert.ok(persistedWord.due>Date.now()+2*86400000,'second successful recall is due after three days');
 assert.ok(Object.values(seedState.seedMemory).some(x=>x.stage===2&&x.due>Date.now()+2*86400000));
 view.querySelector('#memory-map').click();
+// Optional practice is welcome but cannot skip tomorrow's scheduled review.
+const future=Date.now()+5*86400000;
+const one=allSeed[0],offday={seedMemory:{[one.id]:{seen:1,correct:1,stage:2,due:future}}};
+window.KIDS_WORD_MEMORY.open({view,state:offday,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+assert.equal(window.KIDS_WORD_MEMORY.due(offday).length,0);
+view.querySelector('#memory-begin').click();
+const unplanned=view.querySelectorAll('[data-memory-answer]').find(x=>x.dataset.memoryAnswer===one.id);
+assert.ok(unplanned,'unscheduled review offers the already learned word');
+unplanned.click();
+assert.equal(offday.seedMemory[one.id].stage,2,'early practice cannot skip a repetition stage');
+assert.equal(offday.seedMemory[one.id].due,future,'early practice cannot postpone real review');
+view.querySelector('#memory-next').click();
 // A child who misses every word is given a smaller remedial picture quiz,
 // and the island is NOT falsely marked mastered.
 const retryState={seedDone:{},seedMemory:{},xp:0};
