@@ -44,7 +44,7 @@ const gradle=fs.readFileSync(path.join(base,'../../../build.gradle'),'utf8');
 assert.match(gradle,/applicationId 'com\.eva\.english\.kids'/,'Android 13 fresh-install application ID');
 assert.match(gradle,/minSdk 24/,'Android 13 supported by minSdk 24');
 assert.match(gradle,/targetSdk 35/,'newer Android supported');
-assert.match(gradle,/versionCode 8/,'new preschool build version');
+assert.match(gradle,/versionCode 10/,'new preschool build version');
 const manifest=fs.readFileSync(path.join(base,'../AndroidManifest.xml'),'utf8');
 assert.match(manifest,/android:name="com\.wolfie\.kids\.MainActivity"/,'explicit launchable class under the original Java namespace');
 assert.match(manifest,/android:allowBackup="false"/);

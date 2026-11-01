@@ -18,7 +18,7 @@ function showMap(){
  const progress=Math.round(d/packs.length*100);
  ctx.view.innerHTML=`<section class="seed-header"><div class="seed-glitter">✨ ✦ 🌈</div><div class="seed-mascot"><img src="wolfie.svg" alt="Вулфи машет Еве"></div>
  <div class="seed-hero-copy"><div class="seed-chip">🌱 С НУЛЯ • МОИ ПЕРВЫЕ СЛОВА</div><h1>Ева, давай знакомиться с английским!</h1>
- <p>Сначала мы учим слова по красивым картинкам. Ничего писать не нужно!</p></div></section>
+ <p>Учимся по три слова за раз, потом играем и повторяем. Ничего писать не нужно!</p></div></section>
  <section class="feature seed-panel"><div class="section-lead"><h2>🌸 Мои первые 120 слов</h2><span class="badge">${d}/20 полянок</span></div>
  <div class="seed-progress" role="progressbar" aria-label="Знакомство со словами" aria-valuenow="${d}" aria-valuemin="0" aria-valuemax="20"><i style="width:${progress}%"></i></div>
  <button type="button" class="primary seed-continue" id="seed-continue">${d===20?'🎉 Играть снова':'▶ '+(d===0?'Начать первое занятие':'Продолжить приключение')}</button>
@@ -33,27 +33,33 @@ function showMap(){
 }
 function start(index){
  const p=packs[index];if(!p||index>completed())return;
- lesson={pack:p,index,phase:'learn',step:0,correct:0};
+ lesson={pack:p,index,phase:'learn',chunk:0,step:0,correct:0,wrong:[],retry:0};
  showWords();
 }
 function showWords(){
  const p=lesson.pack;
+ const portion=p.words.slice(lesson.chunk*3,lesson.chunk*3+3);
  ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="seed-back">← Назад</button><strong class="badge">🌷 Полянка ${lesson.index+1}/20</strong></div>
- <section class="seed-learn-top"><img src="wolfie.svg" alt="" aria-hidden="true"><div><h1>${safe(p.title)}</h1><p>Нажми на любую картинку, чтобы услышать слово. Повторяй за Вулфи!</p></div></section>
- <section class="feature"><div class="seed-word-grid">${p.words.map((w,i)=>`<button type="button" class="seed-word" data-seed-say="${i}" aria-label="Послушать слово ${safe(w.en)}">
+ <section class="seed-learn-top"><img src="wolfie.svg" alt="" aria-hidden="true"><div><h1>${safe(p.title)}</h1><p>🌷 По три слова за раз! Это группа ${lesson.chunk+1} из 2. Нажми на картинку и повторяй за Вулфи!</p></div></section>
+ <section class="feature"><div class="seed-word-grid">${portion.map((w,i)=>`<button type="button" class="seed-word" data-seed-say="${lesson.chunk*3+i}" aria-label="Посмотреть и послушать слово ${safe(w.en)}">
  <span class="seed-word-illustration seed-art-${i%6}" aria-hidden="true">${picture(w)}</span>
  <span class="seed-word-name" lang="en">${safe(w.en)}</span><small>${safe(w.ru)}</small><span class="seed-speak">🔊</span></button>`).join('')}</div>
- <button class="primary seed-continue" id="seed-try">🎮 Давай попробуем!</button></section>`;
+ <button class="primary seed-continue" id="seed-try">🎮 Поиграем с этими 3 словами!</button></section>`;
  ctx.view.querySelector('#seed-back')?.addEventListener('click',showMap);
  ctx.view.querySelectorAll('[data-seed-say]').forEach(b=>b.addEventListener('click',()=>ctx.speak(p.words[Number(b.dataset.seedSay)].en)));
- ctx.view.querySelector('#seed-try')?.addEventListener('click',()=>{lesson.phase='quiz';lesson.step=0;showQuestion();});
+ ctx.view.querySelector('#seed-try')?.addEventListener('click',()=>{lesson.phase='quiz';lesson.step=lesson.chunk*3;showQuestion();});
 }
 function showQuestion(){
  const s=lesson;if(!s)return;
- if(s.step>=6){finish();return;}
+ if(s.step===3&&s.chunk===0){s.chunk=1;s.phase='learn';showWords();return;}
+ if(s.step>=6){
+  if(s.wrong.length&&s.retry===0){s.retry=1;s.step=0;showRetry();return;}
+  finish();return;
+ }
  s.answered=false;
  const target=s.pack.words[s.step];
- const choices=s.pack.words.filter(w=>w!==target).sort(()=>Math.random()-.5).slice(0,s.step<2?1:2);
+ const familiar=s.pack.words.slice(0,s.chunk===0?3:6);
+ const choices=familiar.filter(w=>w!==target).sort(()=>Math.random()-.5).slice(0,s.step<2?1:2);
  const options=[target,...choices].sort(()=>Math.random()-.5);
  const audio=ctx.speakAvailable();
  ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="seed-back">← Слова</button><span class="badge">${s.step+1}/6</span><span>⭐ ${s.correct}</span></div>
@@ -71,11 +77,71 @@ function showQuestion(){
 function answer(button,target){
  const s=lesson;if(!s||s.phase!=='quiz'||s.answered)return;s.answered=true;
  const correct=button.dataset.seedAnswer===target.id;if(correct)s.correct++;
+ else s.wrong.push(target);
+ const old=ctx.state.seedMemory?.[target.id]||{stage:0,seen:0,correct:0};
+ const stage=correct?Math.min((old.stage||0)+1,5):0;
+ const wait=[0,1,3,7,14,30];
+ ctx.state.seedMemory??={};
+ ctx.state.seedMemory[target.id]={stage,seen:(old.seen||0)+1,correct:(old.correct||0)+Number(correct),due:Date.now()+(correct?wait[stage]*86400000:0)};
+ ctx.save();
  ctx.view.querySelectorAll('[data-seed-answer]').forEach(b=>{b.disabled=true;if(b.dataset.seedAnswer===target.id)b.classList.add('good');else if(b===button)b.classList.add('bad');});
  ctx.view.querySelector('#seed-feedback').innerHTML=`<div class="feedback ${correct?'':'retry'}"><strong>${correct?'✨ Молодец, Ева!':'💗 Вместе научимся!'}</strong>
  <p><b lang="en">${safe(target.en)}</b> — ${safe(target.ru)}</p>
  <button type="button" class="primary" id="seed-next">${s.step===5?'🏅 Мой результат':'Дальше →'}</button></div>`;
  ctx.view.querySelector('#seed-next')?.addEventListener('click',()=>{s.answered=false;s.step++;showQuestion();});
+}
+function showRetry(){
+ const s=lesson;if(!s)return;
+ s.phase='revision';s.answered=false;
+ ctx.view.innerHTML=`<section class="seed-celebrate"><div class="alpha-celebrate">💖 🌼 🧸</div>
+  <h1>Ева, повторим трудные слова!</h1><p>Ошибки помогают учиться. Посмотри на картинки и повтори слова ещё раз. Так они лучше запоминаются!</p>
+  <div class="seed-word-grid">${s.wrong.map(w=>`<button class="seed-word" data-retry-word="${safe(w.id)}"><span class="seed-word-illustration">${picture(w)}</span>
+  <b lang="en">${safe(w.en)}</b><small>${safe(w.ru)}</small><span class="seed-speak">🔊</span></button>`).join('')}</div>
+  <button type="button" id="seed-retry-done" class="primary">🌷 Я повторила!</button></section>`;
+ ctx.view.querySelectorAll('[data-retry-word]').forEach(b=>b.addEventListener('click',()=>{
+  const w=s.wrong.find(x=>x.id===b.dataset.retryWord);if(w)ctx.speak(w.en);
+ }));
+ ctx.view.querySelector('#seed-retry-done')?.addEventListener('click',()=>{s.retryIndex=0;retryQuestion();});
+}
+function retryQuestion(){
+ const s=lesson;if(!s||s.phase!=='revision')return;
+ if(s.retryIndex>=s.wrong.length){finish();return;}
+ s.answered=false;
+ const w=s.wrong[s.retryIndex];
+ const others=s.pack.words.filter(x=>x.id!==w.id);
+ const other=others[Math.floor(Math.random()*others.length)];
+ const options=Math.random()<.5?[w,other]:[other,w];
+ const sound=ctx.speakAvailable();
+ ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="seed-back">← Слова</button>
+  <span class="badge">🌱 Повтор ${s.retryIndex+1}/${s.wrong.length}</span></div>
+  <section class="feature seed-question"><div class="seed-guide"><img src="wolfie.svg" alt=""><span>💗 Я помогу, Ева!</span></div>
+  <h1>Давай вспомним!</h1>
+  ${sound?`<button class="seed-audio" id="seed-retry-hear">🔊 <span>Послушать слово</span></button>`:
+   `<div class="seed-audio fallback" lang="en">${safe(w.en)}<small>Посмотри слово</small></div>`}
+  <div class="seed-choices">${options.map(x=>`<button class="seed-choice" data-seed-retry-choice="${x.id}">
+   <span class="seed-choice-image">${picture(x)}</span><b>${safe(x.ru)}</b></button>`).join('')}</div>
+  <div id="seed-retry-feedback" role="status" aria-live="polite"></div></section>`;
+ ctx.view.querySelector('#seed-back')?.addEventListener('click',showRetry);
+ ctx.view.querySelector('#seed-retry-hear')?.addEventListener('click',()=>ctx.speak(w.en));
+ ctx.view.querySelectorAll('[data-seed-retry-choice]').forEach(button=>button.addEventListener('click',()=>{
+  if(s.answered)return;s.answered=true;
+  const good=button.dataset.seedRetryChoice===w.id;
+  const old=ctx.state.seedMemory?.[w.id]||{seen:0,correct:0,stage:0};
+  const stage=good?Math.min((old.stage||0)+1,5):0;
+  const wait=[0,1,3,7,14,30];
+  ctx.state.seedMemory[w.id]={stage,seen:(old.seen||0)+1,
+   correct:(old.correct||0)+Number(good),due:Date.now()+(good?wait[stage]*86400000:0)};
+  ctx.save();
+  ctx.view.querySelectorAll('[data-seed-retry-choice]').forEach(b=>{
+   b.disabled=true;if(b.dataset.seedRetryChoice===w.id)b.classList.add('good');
+   else if(b===button)b.classList.add('bad');
+  });
+  ctx.view.querySelector('#seed-retry-feedback').innerHTML=`<div class="feedback ${good?'':'retry'}">
+   <strong>${good?'🌸 Вот теперь ты помнишь!':'💞 Не страшно, Ева!'}</strong>
+   <p><b lang="en">${safe(w.en)}</b> — ${safe(w.ru)}</p>
+   <button class="primary" id="seed-retry-next">Дальше →</button></div>`;
+  ctx.view.querySelector('#seed-retry-next')?.addEventListener('click',()=>{s.answered=false;s.retryIndex++;retryQuestion();});
+ }));
 }
 function finish(){
  const s=lesson; if(!s)return;lesson=null;

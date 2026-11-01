@@ -18,6 +18,19 @@ vm.runInNewContext(read('dialogues.js'),{window},{filename:'dialogues.js'});
 vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{filename:'adventures.js'});
 vm.runInNewContext(read('soundgarden.js'),{window,Date,Math},{filename:'soundgarden.js'});
 vm.runInNewContext(read('firststeps.js'),{window,Date,Math},{filename:'firststeps.js'});
+vm.runInNewContext(read('alphabetquest.js'),{window,Date,Math},{filename:'alphabetquest.js'});
+vm.runInNewContext(read('wordmemory.js'),{window,Date,Math},{filename:'wordmemory.js'});
+vm.runInNewContext(read('teacherpath.js'),{window,Date,Math},{filename:'teacherpath.js'});
+assert.equal(window.KIDS_TEACHER_PATH.plans.length,20,'20 week-specific parent scripts');
+assert.equal(window.KIDS_TEACHER_PATH.milestones.length,6,'start through B2 milestones');
+assert.equal(window.KIDS_TEACHER_PATH.weekPlan.length,4,'four short learning sessions each week');
+assert.equal(window.KIDS_TEACHER_PATH.phrases.length,20,'20 distinct contextual listening phrases');
+assert.equal(new Set(window.KIDS_TEACHER_PATH.phrases).size,20,'no duplicate conversation scenarios');
+
+assert.equal(window.KIDS_ALPHABET_QUEST.groups.length,7,'alphabet is split into seven gentle small sessions');
+assert.equal(window.KIDS_ALPHABET_QUEST.groups.reduce((n,g)=>n+g.length,0),26,'all letters taught');
+assert.equal(window.KIDS_WORD_MEMORY.intervals.join(','),'0,1,3,7,14,30','spacing schedule');
+
 assert.equal(window.KIDS_FIRST_STEPS.packs.length,20,'20 gentle micro-lessons');
 for(const name of ['cat','dog','sun','apple','ball','mom']){
  assert.ok(read('first-'+name+'.svg').includes('viewBox'),'custom starter illustration exists: '+name);
@@ -170,9 +183,14 @@ for(let i=0;i<20;i++){
  if(i===0)view.querySelector('#seed-continue').click();
  else view.querySelector('#seed-next-lesson').click();
  assert.match(view.innerHTML,/data-seed-say=/,'six picture-word learning cards on lesson '+(i+1));
- assert.equal(view.querySelectorAll('[data-seed-say]').length,6);
+ assert.equal(view.querySelectorAll('[data-seed-say]').length,3,'three starter cards, not six at once');
+
  view.querySelector('#seed-try').click();
  for(let q=0;q<6;q++){
+  if(q===3){
+   assert.equal(view.querySelectorAll('[data-seed-say]').length,3,'the next three new words are introduced before asking questions');
+   view.querySelector('#seed-try').click();
+  }
   const word=window.KIDS_FIRST_STEPS.packs[i].words[q];
   assert.match(view.innerHTML,/Без голоса/,'visible fallback when TTS missing');
   const correct=view.querySelectorAll('[data-seed-answer]').find(b=>b.dataset.seedAnswer===word.id);
@@ -185,7 +203,121 @@ for(let i=0;i<20;i++){
 }
 assert.equal(Object.keys(seedState.seedDone).length,20,'20 islands completed');
 assert.equal(seedState.xp,240,'one-time reward per micro-lesson');
+assert.equal(Object.keys(seedState.seedMemory).length,120,'all first words have separately saved recall history');
+assert.ok(Object.values(seedState.seedMemory).every(x=>x.seen===1&&x.stage===1),'every answer schedules a next-day review');
 view.querySelector('#seed-home').click();
+
+// Family-based contextual conversation: 20 brief listening tasks with visual comprehension.
+const teacherState={seedDone:{},alphaDone:{},phraseDone:{},seedMemory:{},xp:0};
+for(let i=0;i<20;i++){
+ teacherState.seedDone=Object.fromEntries(window.KIDS_FIRST_STEPS.packs.slice(0,i).map(p=>[p.id,true]));
+ window.KIDS_TEACHER_PATH.open({
+  view,state:teacherState,save(){},speak(){},speakAvailable(){return false;},
+  onExit(){},onWords(){},onABC(){},onMemory(){}
+ });
+ assert.match(view.innerHTML,/Моя дорожка английского/);
+ assert.equal(view.querySelectorAll('[data-teacher-action]').length,4);
+ view.querySelector('#teacher-say').click();
+ assert.match(view.innerHTML,/Как помочь Еве говорить/);
+ view.querySelector('#teacher-phrase-game').click();
+ assert.match(view.innerHTML,/Прочитай с взрослым/);
+ const p=window.KIDS_FIRST_STEPS.packs[i],ix=window.KIDS_TEACHER_PATH.targetIndexes[i],target=p.words[ix];
+ const correct=view.querySelectorAll('[data-teacher-phrase-answer]').find(b=>b.dataset.teacherPhraseAnswer===target.id);
+ assert.ok(correct,'understand one spoken familiar word in phrase '+i);
+ correct.click();
+ assert.match(view.querySelector('#teacher-phrase-feedback').innerHTML,/Ты поняла, Ева!/);
+ assert.equal(teacherState.phraseDone['phrase-'+i],true);
+ view.querySelector('#teacher-phrase-next').click();
+}
+assert.equal(Object.keys(teacherState.phraseDone).length,20);
+assert.equal(teacherState.xp,60,'20 listening achievements once each');
+// Letter quest: all 26 uppercase/lowercase recognitions, 7 small learning groups.
+const alphaState={alphaDone:{},alphabetHeard:{},xp:0};
+window.KIDS_ALPHABET_QUEST.open({view,state:alphaState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+assert.match(view.innerHTML,/Буквы для Евы/);
+for(let groupIndex=0;groupIndex<7;groupIndex++){
+ if(groupIndex===0)view.querySelectorAll('[data-alpha-group]')[0].click();
+ else view.querySelector('#alpha-more').click();
+ const group=window.KIDS_ALPHABET_QUEST.groups[groupIndex];
+ assert.equal(view.querySelectorAll('[data-alpha-say]').length,group.length,'letter cards per group '+groupIndex);
+ assert.match(view.innerHTML,/букву/,'letter instruction is shown');
+ view.querySelector('#alpha-try').click();
+ for(let k=0;k<group.length;k++){
+  const chosen=view.querySelectorAll('[data-alpha-answer]').find(b=>b.dataset.alphaAnswer===group[k].letter);
+  assert.ok(chosen,'lowercase / picture answer for '+group[k].letter);
+  chosen.click();
+  assert.match(view.querySelector('#alpha-feedback').innerHTML,/Отлично, Ева!/);
+  view.querySelector('#alpha-next').click();
+ }
+}
+assert.equal(Object.keys(alphaState.alphaDone).length,7);
+assert.equal(alphaState.xp,70,'seven once-only letter achievements');
+view.querySelector('#alpha-all').click();
+
+// Spaced repetition: 8 words are recalled and moved to the next interval.
+for(const key of Object.keys(seedState.seedMemory))seedState.seedMemory[key].due=0;
+assert.equal(window.KIDS_WORD_MEMORY.due(seedState).length,120);
+window.KIDS_WORD_MEMORY.open({view,state:seedState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+view.querySelector('#memory-begin').click();
+for(let i=0;i<8;i++){
+ const target=view.innerHTML.match(/class="seed-audio fallback" lang="en">([^<]+)/)?.[1];
+ const word=allSeed.find(w=>w.en===target);
+ assert.ok(word,'due word visible in no-voice fallback');
+ const chosen=view.querySelectorAll('[data-memory-answer]').find(b=>b.dataset.memoryAnswer===word.id);
+ assert.ok(chosen,'word matching '+word.en);
+ chosen.click();
+ assert.match(view.querySelector('#memory-feedback').innerHTML,/Отличная память!/);
+ view.querySelector('#memory-next').click();
+}
+assert.match(view.innerHTML,/слова становятся знакомее/);
+assert.equal(window.KIDS_WORD_MEMORY.due(seedState).length,112,'eight recalled words deferred to 3 days');
+const persistedWord=Object.values(seedState.seedMemory).find(x=>x.stage===2);
+assert.ok(persistedWord.due>Date.now()+2*86400000,'second successful recall is due after three days');
+assert.ok(Object.values(seedState.seedMemory).some(x=>x.stage===2&&x.due>Date.now()+2*86400000));
+view.querySelector('#memory-map').click();
+// Optional practice is welcome but cannot skip tomorrow's scheduled review.
+const future=Date.now()+5*86400000;
+const one=allSeed[0],offday={seedMemory:{[one.id]:{seen:1,correct:1,stage:2,due:future}}};
+window.KIDS_WORD_MEMORY.open({view,state:offday,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+assert.equal(window.KIDS_WORD_MEMORY.due(offday).length,0);
+view.querySelector('#memory-begin').click();
+const unplanned=view.querySelectorAll('[data-memory-answer]').find(x=>x.dataset.memoryAnswer===one.id);
+assert.ok(unplanned,'unscheduled review offers the already learned word');
+unplanned.click();
+assert.equal(offday.seedMemory[one.id].stage,2,'early practice cannot skip a repetition stage');
+assert.equal(offday.seedMemory[one.id].due,future,'early practice cannot postpone real review');
+view.querySelector('#memory-next').click();
+// A child who misses every word is given a smaller remedial picture quiz,
+// and the island is NOT falsely marked mastered.
+const retryState={seedDone:{},seedMemory:{},xp:0};
+window.KIDS_FIRST_STEPS.open({view,state:retryState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
+view.querySelector('#seed-continue').click();
+view.querySelector('#seed-try').click();
+for(let q=0;q<6;q++){
+ if(q===3)view.querySelector('#seed-try').click();
+ const word=window.KIDS_FIRST_STEPS.packs[0].words[q];
+ const mistake=view.querySelectorAll('[data-seed-answer]').find(b=>b.dataset.seedAnswer!==word.id);
+ assert.ok(mistake,'deliberate error choice offered');
+ mistake.click();
+ assert.match(view.querySelector('#seed-feedback').innerHTML,/Вместе научимся!/);
+ view.querySelector('#seed-next').click();
+}
+assert.match(view.innerHTML,/повторим трудные слова/,'missed-word flashcards appear');
+assert.equal(view.querySelectorAll('[data-retry-word]').length,6,'all missed words available to rehearse');
+view.querySelector('#seed-retry-done').click();
+for(let q=0;q<6;q++){
+ const word=window.KIDS_FIRST_STEPS.packs[0].words[q];
+ const choice=view.querySelectorAll('[data-seed-retry-choice]').find(b=>b.dataset.seedRetryChoice===word.id);
+ assert.ok(choice,'correct recognition retest for missed '+word.en);
+ choice.click();
+ assert.match(view.querySelector('#seed-retry-feedback').innerHTML,/Вот теперь ты помнишь!/);
+ view.querySelector('#seed-retry-next').click();
+}
+assert.ok(!retryState.seedDone['seed-01'],'a fully wrong first pass cannot unlock the next island');
+assert.equal(retryState.xp,0,'remedial session cannot farm bonus stars');
+assert.ok(Object.values(retryState.seedMemory).every(v=>v.seen===2),'per-word mistakes and their retry are both recorded');
+view.querySelector('#seed-next-lesson').click();
+assert.equal(view.querySelectorAll('[data-seed-say]').length,3,'friendly retry returns to three picture cards');
 
 vm.runInNewContext(read('app.js'),{
  window,document:doc,localStorage,console,Date,Math,
@@ -226,6 +358,7 @@ assert.match(view.innerHTML,/id="reset-progress"/);
 assert.match(view.innerHTML,/id="export-progress"/);
 assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
+assert.match(view.innerHTML,/parent-teacher/,'parent area exposes an actionable learning plan');
 assert.match(view.innerHTML,/id="toggle-advanced"/);
 assert.equal(JSON.parse(storage).advancedContent,false,'gentle mode is the default');
 view.querySelector('#toggle-advanced').click();
@@ -246,6 +379,7 @@ view.querySelector('#stories-play').click();
 assert.doesNotMatch(view.innerHTML,/data-quest-level="B2"/,'B2 hidden in stories');
 buttons[0].click();
 assert.match(view.innerHTML,/Привет,<br>Ева!/);
+assert.match(view.innerHTML,/teacher-home/,'educational pathway is accessible on the home screen');
 assert.match(view.innerHTML,/Следующий шаг Евы/);
 assert.match(view.innerHTML,/Карта Евы/);
 assert.match(view.innerHTML,/Волшебный мир Евы/);
@@ -395,6 +529,11 @@ assert.match(view.innerHTML,/Привет,<br>Ева!/);
 assert.equal(window.KidsBack(),false,'back at home should return control to Android');
 
 // Resume from saved progress without discarding valid achievements or selected colors.
+const restoredFixture=JSON.parse(storage);
+restoredFixture.seedDone={'seed-01':true};
+restoredFixture.seedMemory={'seedword-01-1':seedState.seedMemory['seedword-01-1']};
+restoredFixture.alphaDone={'letters-0':true};
+storage=JSON.stringify(restoredFixture);
 const preserved=storage;
 vm.runInNewContext(read('app.js'),{
  window,document:doc,localStorage,console,Date,Math,
@@ -405,6 +544,13 @@ assert.match(view.innerHTML,/1\/300/,'a successful lesson survives a WebView rel
 assert.equal(root.dataset.theme,'custom','custom palette survives restart');
 assert.equal(JSON.parse(storage).garden[0],'👣','sticker placement survives restart');
 assert.equal(JSON.parse(storage).soundScores.pets.best,6,'sound learning remains after restart');
+assert.match(view.innerHTML,/1\/7 островков/,'alphabet group is preserved');
+view.querySelector('#memory-first').click();
+assert.match(view.innerHTML,/Уже встречались: 1 из 120/,'per-word spaced reviews survive Android restart');
+buttons[0].click();
+view.querySelector('#alphabet-first').click();
+assert.match(view.innerHTML,/Знаю буквы!/,'letter mastery survives restart');
+buttons[0].click();
 
 // Fail gracefully on partially corrupted progress, avoiding crashes and HTML injection.
 storage=JSON.stringify({done:[],items:null,days:"broken",level:"invalid",theme:"<img src=x>",
