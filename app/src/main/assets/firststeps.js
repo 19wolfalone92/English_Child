@@ -80,17 +80,18 @@ function answer(button,target){
 function finish(){
  const s=lesson; if(!s)return;lesson=null;
  ctx.state.seedDone??={};
+ const mastered=s.correct>=4;
  const first=!ctx.state.seedDone[s.pack.id];
- ctx.state.seedDone[s.pack.id]=true;
- if(first)ctx.state.xp=(ctx.state.xp||0)+12;
+ if(mastered)ctx.state.seedDone[s.pack.id]=true;
+ if(mastered&&first)ctx.state.xp=(ctx.state.xp||0)+12;
  ctx.save();
  ctx.view.innerHTML=`<section class="seed-celebrate"><img src="wolfie.svg" alt="Вулфи поздравляет Еву">
- <h1>${s.correct>=4?'Ева, ты супер! 🌟':'Ева, ты молодец! 💜'}</h1><p>Ты познакомилась с шестью новыми словами!</p>
+ <h1>${mastered?'Ева, ты супер! 🌟':'Ева, давай ещё немного! 💜'}</h1><p>Ты познакомилась с шестью новыми словами!</p>
  <div class="seed-score">${'⭐'.repeat(Math.max(1,Math.ceil(s.correct/2)))}</div>
  <p>Правильных ответов: ${s.correct}/6. Главное — учиться с удовольствием!</p>
- <button class="primary seed-continue" id="seed-next-lesson">${completed()<20?'🌈 Следующая полянка':'🎉 Посмотреть мир Евы'}</button>
+ <button class="primary seed-continue" id="seed-next-lesson">${!mastered?'💖 Попробовать снова':completed()<20?'🌈 Следующая полянка':'🎉 Посмотреть мир Евы'}</button>
  <button class="secondary full" id="seed-home">🏠 Домик</button></section>`;
- ctx.view.querySelector('#seed-next-lesson')?.addEventListener('click',()=>{const n=completed();if(n<20)start(n);else showMap();});
+ ctx.view.querySelector('#seed-next-lesson')?.addEventListener('click',()=>{if(!mastered)start(s.index);else{const n=completed();if(n<20)start(n);else showMap();}});
  ctx.view.querySelector('#seed-home')?.addEventListener('click',ctx.onExit);
 }
 window.KIDS_FIRST_STEPS=Object.freeze({packs,open,completed:()=>ctx?completed():0});
