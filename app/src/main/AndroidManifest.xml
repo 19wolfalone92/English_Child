@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Required to discover installed on-device speech engines on Android 11+.
+       This is package visibility, NOT internet or microphone access. -->
+  <queries>
+    <intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>
+  </queries>
   <application android:allowBackup="false" android:label="Ева English Kids" android:icon="@drawable/ic_kids" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="false">
     <activity android:name="com.wolfie.kids.MainActivity" android:exported="true" android:screenOrientation="unspecified">
       <intent-filter>
