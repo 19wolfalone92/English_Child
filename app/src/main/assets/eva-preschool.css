@@ -105,3 +105,7 @@ html[data-theme=ocean]{--ui-primary:#177e99;--ui-deep:#145b71;--ui-accent:#95e1e
 html[data-theme=berry]{--ui-primary:#b83962;--ui-deep:#842747;--ui-accent:#ffb88c;--ui-bg:#fff6f4;--ui-ink:#583542;--ui-soft:#ffe0eb;--ui-sky:#f7dfed;--ui-highlight:#fff0ca;--ui-border:#f3cedf;--ui-softglow:rgba(184,57,98,.22)}
 @media(max-width:350px){.seed-word-grid{gap:7px}.seed-word{min-height:163px}.seed-choices{gap:7px}.seed-hero-copy h1{font-size:20px}.seed-header .seed-mascot{width:33%}.seed-home-entry{padding:16px 13px}}
 @media(prefers-reduced-motion:reduce){.seed-progress i{transition:none}}
+
+.seed-word-illustration img{width:98%;height:98%;object-fit:contain;filter:drop-shadow(0 4px 3px #57417735)}
+.seed-choice-image img{width:92px;height:92px;max-width:100%;object-fit:contain;filter:drop-shadow(0 5px 5px #68509435)}
+.seed-home-art img{width:100%;height:100%;object-fit:contain}
