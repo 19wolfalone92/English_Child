@@ -240,6 +240,8 @@ for(let i=0;i<8;i++){
 }
 assert.match(view.innerHTML,/слова становятся знакомее/);
 assert.equal(window.KIDS_WORD_MEMORY.due(seedState).length,112,'eight recalled words deferred to 3 days');
+const persistedWord=Object.values(seedState.seedMemory).find(x=>x.stage===2);
+assert.ok(persistedWord.due>Date.now()+2*86400000,'second successful recall is due after three days');
 assert.ok(Object.values(seedState.seedMemory).some(x=>x.stage===2&&x.due>Date.now()+2*86400000));
 view.querySelector('#memory-map').click();
 
@@ -451,6 +453,11 @@ assert.match(view.innerHTML,/Привет,<br>Ева!/);
 assert.equal(window.KidsBack(),false,'back at home should return control to Android');
 
 // Resume from saved progress without discarding valid achievements or selected colors.
+const restoredFixture=JSON.parse(storage);
+restoredFixture.seedDone={'seed-01':true};
+restoredFixture.seedMemory={'seedword-01-1':seedState.seedMemory['seedword-01-1']};
+restoredFixture.alphaDone={'letters-0':true};
+storage=JSON.stringify(restoredFixture);
 const preserved=storage;
 vm.runInNewContext(read('app.js'),{
  window,document:doc,localStorage,console,Date,Math,
@@ -461,6 +468,13 @@ assert.match(view.innerHTML,/1\/300/,'a successful lesson survives a WebView rel
 assert.equal(root.dataset.theme,'custom','custom palette survives restart');
 assert.equal(JSON.parse(storage).garden[0],'👣','sticker placement survives restart');
 assert.equal(JSON.parse(storage).soundScores.pets.best,6,'sound learning remains after restart');
+assert.match(view.innerHTML,/1\/7 островков/,'alphabet group is preserved');
+view.querySelector('#memory-first').click();
+assert.match(view.innerHTML,/Уже встречались: 1 из 120/,'per-word spaced reviews survive Android restart');
+buttons[0].click();
+view.querySelector('#alphabet-first').click();
+assert.match(view.innerHTML,/Знаю буквы!/,'letter mastery survives restart');
+buttons[0].click();
 
 // Fail gracefully on partially corrupted progress, avoiding crashes and HTML injection.
 storage=JSON.stringify({done:[],items:null,days:"broken",level:"invalid",theme:"<img src=x>",
