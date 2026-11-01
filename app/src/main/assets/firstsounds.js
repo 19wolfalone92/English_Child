@@ -42,10 +42,10 @@ function intro(){
  ctx.view.querySelector('#soundfamily-go')?.addEventListener('click',question);
 }
 function question(){
- const r=game,g=groups[r.index];if(!r)return;
+ const r=game;if(!r)return;const g=groups[r.index];
  if(r.step===3){finish();return;}
  r.answered=false;
- const target=g.words[r.step],other=g.other;
+ const target=g.words[r.step],other=groups[(r.index+r.step+1)%groups.length].words[(r.step+1)%3];
  const opts=(r.step%2)?[other,target]:[target,other];
  ctx.view.innerHTML=`<div class="task-head"><button class="secondary small" id="soundfamily-back">← Слова</button>
  <span class="badge">${r.step+1}/3</span></div>
