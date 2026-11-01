@@ -656,6 +656,13 @@ assert.equal(JSON.parse(storage).soundScores.pets.best,6,'sound learning remains
 assert.match(view.innerHTML,/1\/7 островков/,'alphabet group is preserved');
 assert.match(view.innerHTML,/1\/20 коротких историй/,'picture reading results survive restart');
 assert.match(view.innerHTML,/1\/8 звуковых семей/,'sound families survive restart');
+buttons[3].click();
+assert.equal(view.querySelectorAll('[data-garden-slot]').length,16,'garden offers 16 places for earned early stickers');
+for(const badge of ['Первая полянка','Первая азбука','Первая сказка','Звуковой детектив']){
+ assert.match(view.innerHTML,new RegExp(badge),'real six-year-old learning unlocks '+badge);
+}
+assert.match(view.innerHTML,/13 наклеек/,'garden correctly counts thirteen obtainable sticker types');
+buttons[0].click();
 view.querySelector('#memory-first').click();
 assert.match(view.innerHTML,/Уже встречались: 1 из 120/,'per-word spaced reviews survive Android restart');
 buttons[0].click();
