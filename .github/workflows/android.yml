@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# Avoid burning GitHub runner time on intermediate commits during child-app development.
+concurrency:
+  group: eva-kids-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
