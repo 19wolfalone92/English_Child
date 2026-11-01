@@ -25,6 +25,12 @@ for(const cssName of styles){
  }
 }
 const scene=file('eva-valley.svg'),character=file('wolfie.svg');
+const starterNames=['cat','dog','sun','apple','ball','mom'];
+for(const w of starterNames){
+ const illustration=file('first-'+w+'.svg');
+ assert.match(illustration,/<svg\\s/,'real offline vector art for '+w);
+ assert.doesNotMatch(illustration,/<script|https?:\\/\\/|onload=|<foreignObject/i,'safe beginner SVG '+w);
+}
 for(const [name,svg] of [['landscape',scene],['character',character]]){
  assert.match(svg,/<svg\s[^>]*viewBox=/,'scalable SVG '+name);
  assert.doesNotMatch(svg,/<script\b|<foreignObject\b|onload=|href=["']https?:|<image\b/i,'no remote or executable SVG content '+name);
