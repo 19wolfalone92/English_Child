@@ -29,8 +29,9 @@ const starterNames=['cat','dog','sun','apple','ball','mom'];
 for(const w of starterNames){
  const illustration=file('first-'+w+'.svg');
  assert.ok(illustration.startsWith('<svg '),'real offline SVG illustration '+w);
+ const safeMarkup=illustration.replace('http://www.w3.org/2000/svg','');
  for(const bad of ['<script','https://','http://','onload=','<foreignObject'])
-  assert.ok(!illustration.includes(bad),'unsafe external or executable content in beginner art '+w);
+  assert.ok(!safeMarkup.includes(bad),'unsafe external or executable content in beginner art '+w);
 }
 for(const [name,svg] of [['landscape',scene],['character',character]]){
  assert.match(svg,/<svg\s[^>]*viewBox=/,'scalable SVG '+name);
