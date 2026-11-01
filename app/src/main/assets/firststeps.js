@@ -92,7 +92,7 @@ function answer(button,target){
 }
 function showRetry(){
  const s=lesson;if(!s)return;
- s.phase='revision';
+ s.phase='revision';s.answered=false;
  ctx.view.innerHTML=`<section class="seed-celebrate"><div class="alpha-celebrate">💖 🌼 🧸</div>
   <h1>Ева, повторим трудные слова!</h1><p>Ошибки помогают учиться. Посмотри на картинки и повтори слова ещё раз. Так они лучше запоминаются!</p>
   <div class="seed-word-grid">${s.wrong.map(w=>`<button class="seed-word" data-retry-word="${safe(w.id)}"><span class="seed-word-illustration">${picture(w)}</span>
@@ -106,6 +106,7 @@ function showRetry(){
 function retryQuestion(){
  const s=lesson;if(!s||s.phase!=='revision')return;
  if(s.retryIndex>=s.wrong.length){finish();return;}
+ s.answered=false;
  const w=s.wrong[s.retryIndex];
  const others=s.pack.words.filter(x=>x.id!==w.id);
  const other=others[Math.floor(Math.random()*others.length)];
