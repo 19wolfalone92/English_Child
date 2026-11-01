@@ -4,6 +4,8 @@ android {
   compileSdk 35
   defaultConfig {
     applicationId 'com.eva.english.kids'
+    // Diagnostic side-by-side build, preserving an older differently signed installation.
+    if (project.hasProperty('freshInstall')) applicationIdSuffix '.fresh060'
     minSdk 24
     targetSdk 35
     versionCode 8
