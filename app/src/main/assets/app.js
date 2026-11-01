@@ -522,7 +522,11 @@ function renderFamily(){
  <p>💬 Простых фраз с пониманием: ${Object.keys(state.phraseDone||{}).length}/20. 📖 Мини-сказок: ${Object.keys(state.miniBooks||{}).length}/20. 👂 Звуковых семей: ${Object.keys(state.soundFamilies||{}).length}/8.</p>
  <button type="button" class="primary full" id="parent-passport">📋 Учебный паспорт Евы — реальные результаты</button>
  <button type="button" class="secondary full" id="parent-teacher">🌈 Показать подробный план занятий</button>
- <h3>Как помогать ребёнку</h3><p>Начните с 10–15 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
+ <h3>🔊 Проверка английской озвучки</h3><p id="speech-status" role="status">${speakAvailable()?'✅ Английский голос доступен на телефоне.':'⚠️ Английский голос пока недоступен. Без него задания со звуком показывают текст.'}</p>
+ <button type="button" class="secondary full" id="voice-check">🔄 Проверить голос ещё раз</button>
+ <button type="button" class="primary full" id="voice-test" ${speakAvailable()?'':'disabled'}>🔊 Проверить произношение: Hello, Eva!</button>
+ <p class="muted">Если звук отсутствует на Android 13: проверьте громкость мультимедиа и «Настройки → Система → Язык и ввод → Синтез речи». Выберите установленный движок и английский голос; затем вернитесь сюда и нажмите «Проверить голос ещё раз». Интернет не требуется во время занятий, но установка голоса через настройки телефона может потребовать его.</p>
+ <h3>Как помогать ребёнку</h3><p>Начните с 5–10 минут за раз. После занятия предложите отдых, движение или игру без экрана. Повторяйте вслух, играйте с карточками, делайте перерывы. На сложных ступенях увеличивайте занятия постепенно.</p><p>🔒 Прогресс хранится только на устройстве. Нет аккаунта, загрузок персональных данных и сетевых запросов.</p><h3>🧸 Режим для ребёнка 6 лет</h3><p>По умолчанию Ева видит только подходящие для младшего возраста ступени свободных игр: первые слова, A1 и A2. Сложные B1/B2 остаются в курсе и могут быть открыты в меню взрослым.</p><button type="button" class="secondary full" id="toggle-advanced">📚 ${state.advancedContent?'Скрыть сложные B1/B2':'Показать B1/B2 в играх'}</button><h3>💾 Резервная копия</h3><p>Перед удалением старой версии или сменой телефона сохраните файл с достижениями Евы. Восстановление заменяет текущий прогресс. Храните этот файл в надёжном месте.</p><button type="button" class="secondary full" id="export-progress">📤 Сохранить прогресс Евы</button><button type="button" class="secondary full" id="import-progress">📥 Восстановить прогресс из файла</button><button type="button" class="secondary full" id="reset-progress">Сбросить весь прогресс</button><button type="button" class="secondary full" id="family-back">← На главный экран</button></section>`;
  view.querySelector('#toggle-advanced')?.addEventListener('click',()=>{
   state.advancedContent=!state.advancedContent;
   if(!state.advancedContent&&['B1','B2'].includes(state.level))state.level='Pre-A1';
@@ -530,6 +534,14 @@ function renderFamily(){
  });
  view.querySelector('#parent-passport')?.addEventListener('click',launchLearningPassport);
  view.querySelector('#parent-teacher')?.addEventListener('click',launchTeacherPath);
+ view.querySelector('#voice-check')?.addEventListener('click',()=>{
+  const available=speakAvailable();
+  const field=view.querySelector('#speech-status');
+  if(field)field.textContent=available?'✅ Английский голос доступен на телефоне.':'⚠️ Английский голос не обнаружен. Проверьте системный синтез речи и повторите проверку.';
+  const test=view.querySelector('#voice-test');
+  if(test)test.disabled=!available;
+ });
+ view.querySelector('#voice-test')?.addEventListener('click',()=>speak('Hello, Eva! Welcome to English.'));
  view.querySelector('#reset-progress').addEventListener('click',()=>{if(confirm('Удалить все звёзды, уроки и повторения с этого устройства?')){state=fresh();save();applyTheme();renderFamily();}});
  view.querySelector('#export-progress')?.addEventListener('click',()=>{
   if(bridge?.exportProgress)bridge.exportProgress();

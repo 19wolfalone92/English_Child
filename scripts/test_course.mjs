@@ -459,6 +459,11 @@ assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
 assert.match(view.innerHTML,/parent-teacher/,'parent area exposes an actionable learning plan');
 assert.match(view.innerHTML,/parent-passport/,'adult can access factual report only after gate');
+assert.match(view.innerHTML,/id="voice-check"/,'adult can recheck English voice');
+assert.match(view.innerHTML,/id="voice-test"/,'adult can test English pronunciation');
+view.querySelector('#voice-check').click();
+assert.match(view.querySelector('#speech-status').textContent,/не обнаружен/,'correct no-TTS fallback when voice is not installed');
+
 view.querySelector('#parent-passport').click();
 assert.match(view.innerHTML,/Учебный паспорт Евы/,'passport opens from adult menu');
 assert.match(view.innerHTML,/Пробовали/);

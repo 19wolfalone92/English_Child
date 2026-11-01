@@ -40,11 +40,15 @@ public final class MainActivity extends Activity {
         int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         if (android.os.Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         getWindow().getDecorView().setSystemUiVisibility(flags);
+        // Some speech engines invoke onInit before the constructor has returned:
+        // always POST setup, otherwise the unassigned field is null and English
+        // stays disabled for the entire app session.
         tts = new TextToSpeech(this, status -> {
-            if(status == TextToSpeech.SUCCESS && tts != null) {
-                int language = tts.setLanguage(Locale.US);
-                ttsReady = language >= TextToSpeech.LANG_AVAILABLE;
-                tts.setSpeechRate(0.83f);
+            if(status == TextToSpeech.SUCCESS) {
+                new android.os.Handler(android.os.Looper.getMainLooper())
+                    .post(this::configureEnglishSpeech);
+            } else {
+                ttsReady = false;
             }
         });
         webView = new WebView(this);
@@ -66,6 +70,33 @@ public final class MainActivity extends Activity {
         });
         setContentView(webView);
         webView.loadUrl(HOME);
+    }
+
+    /** English voice setup after asynchronous Android TTS initialization. */
+    private void configureEnglishSpeech() {
+        TextToSpeech engine = tts;
+        if(engine == null || isFinishing() || isDestroyed()) {
+            ttsReady = false;
+            return;
+        }
+        try {
+            int availability = engine.isLanguageAvailable(Locale.US);
+            Locale selected = Locale.US;
+            if(availability < TextToSpeech.LANG_AVAILABLE) {
+                selected = Locale.ENGLISH;
+                availability = engine.isLanguageAvailable(selected);
+            }
+            if(availability < TextToSpeech.LANG_AVAILABLE) {
+                ttsReady = false;
+                return;
+            }
+            int result = engine.setLanguage(selected);
+            engine.setSpeechRate(0.83f);
+            ttsReady = result >= TextToSpeech.LANG_AVAILABLE;
+        } catch(RuntimeException error) {
+            android.util.Log.w("EvaKids", "English TTS initialization failed", error);
+            ttsReady = false;
+        }
     }
 
     private void notice(String message) {
@@ -163,8 +194,11 @@ public final class MainActivity extends Activity {
             if(text == null || text.length() >= TextToSpeech.getMaxSpeechInputLength() || !ttsReady) return;
             runOnUiThread(() -> {
                 if(tts == null || !ttsReady) return;
-                tts.setLanguage(Locale.US);
-                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "eva-english");
+                // Re-select an available English locale after any Russian hint.
+                int lang = tts.setLanguage(tts.isLanguageAvailable(Locale.US)
+                    >= TextToSpeech.LANG_AVAILABLE ? Locale.US : Locale.ENGLISH);
+                if(lang >= TextToSpeech.LANG_AVAILABLE)
+                    tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "eva-english");
             });
         }
         @JavascriptInterface public void speakRussian(String text) {
