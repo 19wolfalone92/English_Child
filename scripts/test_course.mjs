@@ -19,6 +19,14 @@ vm.runInNewContext(read('adventures.js'),{window,Date,Math,setTimeout:(cb)=>0},{
 vm.runInNewContext(read('soundgarden.js'),{window,Date,Math},{filename:'soundgarden.js'});
 vm.runInNewContext(read('firststeps.js'),{window,Date,Math},{filename:'firststeps.js'});
 assert.equal(window.KIDS_FIRST_STEPS.packs.length,20,'20 gentle micro-lessons');
+for(const name of ['cat','dog','sun','apple','ball','mom']){
+ assert.ok(read('first-'+name+'.svg').includes('viewBox'),'custom starter illustration exists: '+name);
+}
+assert.match(read('eva-preschool.css'),/seed-word-illustration/,'real illustrated cards are styled');
+assert.match(read('app.js'),/🎀 Ночной кавай/,'original nighttime theme is available');
+assert.match(read('app.js'),/⚙️ Маленькие изобретатели/,'original inventor theme is available');
+assert.match(read('index.html'),/firststeps.js/,'real preschool course loads in app');
+
 const allSeed=window.KIDS_FIRST_STEPS.packs.flatMap(p=>p.words);
 assert.equal(allSeed.length,120,'120 easy first words');
 assert.equal(new Set(allSeed.map(w=>w.en)).size,120,'unique first words, no memorizing repeats');
