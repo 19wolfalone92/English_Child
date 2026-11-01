@@ -32,7 +32,7 @@ function recoverData(x){
  r.xp=boundedNumber(x.xp);r.answers=boundedNumber(x.answers);r.correct=Math.min(boundedNumber(x.correct),r.answers);
  r.seedDone=Object.fromEntries(Object.entries(safeRecord(x.seedDone)).filter(([id,v])=>/^seed-\d{2}$/.test(id)&&v===true));
  r.seedMemory=Object.fromEntries(Object.entries(safeRecord(x.seedMemory))
-  .filter(([id,v])=>/^seedword-\\d{2}-[1-6]$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
+  .filter(([id,v])=>/^seedword-\d{2}-[1-6]$/.test(id)&&v&&typeof v==='object'&&!Array.isArray(v))
   .map(([id,v])=>[id,{stage:boundedNumber(v.stage,5),seen:boundedNumber(v.seen,100000),
    correct:boundedNumber(v.correct,100000),due:boundedNumber(v.due,9999999999999)}]));
  r.alphaDone=Object.fromEntries(Object.entries(safeRecord(x.alphaDone))
