@@ -47,6 +47,7 @@ function showWords(){
 function showQuestion(){
  const s=lesson;if(!s)return;
  if(s.step>=6){finish();return;}
+ s.answered=false;
  const target=s.pack.words[s.step];
  const choices=s.pack.words.filter(w=>w!==target).sort(()=>Math.random()-.5).slice(0,s.step<2?1:2);
  const options=[target,...choices].sort(()=>Math.random()-.5);
