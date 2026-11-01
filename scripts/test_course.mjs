@@ -605,6 +605,8 @@ const restoredFixture=JSON.parse(storage);
 restoredFixture.seedDone={'seed-01':true};
 restoredFixture.seedMemory={'seedword-01-1':seedState.seedMemory['seedword-01-1']};
 restoredFixture.alphaDone={'letters-0':true};
+restoredFixture.miniBooks={'book-01':true};
+restoredFixture.soundFamilies={'sound-0':true};
 storage=JSON.stringify(restoredFixture);
 const preserved=storage;
 vm.runInNewContext(read('app.js'),{
@@ -617,6 +619,8 @@ assert.equal(root.dataset.theme,'custom','custom palette survives restart');
 assert.equal(JSON.parse(storage).garden[0],'👣','sticker placement survives restart');
 assert.equal(JSON.parse(storage).soundScores.pets.best,6,'sound learning remains after restart');
 assert.match(view.innerHTML,/1\/7 островков/,'alphabet group is preserved');
+assert.match(view.innerHTML,/1\/20 коротких историй/,'picture reading results survive restart');
+assert.match(view.innerHTML,/1\/8 звуковых семей/,'sound families survive restart');
 view.querySelector('#memory-first').click();
 assert.match(view.innerHTML,/Уже встречались: 1 из 120/,'per-word spaced reviews survive Android restart');
 buttons[0].click();
