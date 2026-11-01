@@ -20,6 +20,13 @@ vm.runInNewContext(read('soundgarden.js'),{window,Date,Math},{filename:'soundgar
 vm.runInNewContext(read('firststeps.js'),{window,Date,Math},{filename:'firststeps.js'});
 vm.runInNewContext(read('alphabetquest.js'),{window,Date,Math},{filename:'alphabetquest.js'});
 vm.runInNewContext(read('wordmemory.js'),{window,Date,Math},{filename:'wordmemory.js'});
+vm.runInNewContext(read('teacherpath.js'),{window,Date,Math},{filename:'teacherpath.js'});
+assert.equal(window.KIDS_TEACHER_PATH.plans.length,20,'20 week-specific parent scripts');
+assert.equal(window.KIDS_TEACHER_PATH.milestones.length,6,'start through B2 milestones');
+assert.equal(window.KIDS_TEACHER_PATH.weekPlan.length,4,'four short learning sessions each week');
+assert.equal(window.KIDS_TEACHER_PATH.phrases.length,20,'20 distinct contextual listening phrases');
+assert.equal(new Set(window.KIDS_TEACHER_PATH.phrases).size,20,'no duplicate conversation scenarios');
+
 assert.equal(window.KIDS_ALPHABET_QUEST.groups.length,7,'alphabet is split into seven gentle small sessions');
 assert.equal(window.KIDS_ALPHABET_QUEST.groups.reduce((n,g)=>n+g.length,0),26,'all letters taught');
 assert.equal(window.KIDS_WORD_MEMORY.intervals.join(','),'0,1,3,7,14,30','spacing schedule');
@@ -200,6 +207,30 @@ assert.equal(Object.keys(seedState.seedMemory).length,120,'all first words have 
 assert.ok(Object.values(seedState.seedMemory).every(x=>x.seen===1&&x.stage===1),'every answer schedules a next-day review');
 view.querySelector('#seed-home').click();
 
+// Family-based contextual conversation: 20 brief listening tasks with visual comprehension.
+const teacherState={seedDone:{},alphaDone:{},phraseDone:{},seedMemory:{},xp:0};
+for(let i=0;i<20;i++){
+ teacherState.seedDone=Object.fromEntries(window.KIDS_FIRST_STEPS.packs.slice(0,i).map(p=>[p.id,true]));
+ window.KIDS_TEACHER_PATH.open({
+  view,state:teacherState,save(){},speak(){},speakAvailable(){return false;},
+  onExit(){},onWords(){},onABC(){},onMemory(){}
+ });
+ assert.match(view.innerHTML,/Моя дорожка английского/);
+ assert.equal(view.querySelectorAll('[data-teacher-action]').length,4);
+ view.querySelector('#teacher-say').click();
+ assert.match(view.innerHTML,/Как помочь Еве говорить/);
+ view.querySelector('#teacher-phrase-game').click();
+ assert.match(view.innerHTML,/Прочитай с взрослым/);
+ const p=window.KIDS_FIRST_STEPS.packs[i],ix=window.KIDS_TEACHER_PATH.targetIndexes[i],target=p.words[ix];
+ const correct=view.querySelectorAll('[data-teacher-phrase-answer]').find(b=>b.dataset.teacherPhraseAnswer===target.id);
+ assert.ok(correct,'understand one spoken familiar word in phrase '+i);
+ correct.click();
+ assert.match(view.querySelector('#teacher-phrase-feedback').innerHTML,/Ты поняла, Ева!/);
+ assert.equal(teacherState.phraseDone['phrase-'+i],true);
+ view.querySelector('#teacher-phrase-next').click();
+}
+assert.equal(Object.keys(teacherState.phraseDone).length,20);
+assert.equal(teacherState.xp,60,'20 listening achievements once each');
 // Letter quest: all 26 uppercase/lowercase recognitions, 7 small learning groups.
 const alphaState={alphaDone:{},alphabetHeard:{},xp:0};
 window.KIDS_ALPHABET_QUEST.open({view,state:alphaState,save(){},speak(){},speakAvailable(){return false;},onExit(){}});
@@ -327,6 +358,7 @@ assert.match(view.innerHTML,/id="reset-progress"/);
 assert.match(view.innerHTML,/id="export-progress"/);
 assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
+assert.match(view.innerHTML,/parent-teacher/,'parent area exposes an actionable learning plan');
 assert.match(view.innerHTML,/id="toggle-advanced"/);
 assert.equal(JSON.parse(storage).advancedContent,false,'gentle mode is the default');
 view.querySelector('#toggle-advanced').click();
@@ -347,6 +379,7 @@ view.querySelector('#stories-play').click();
 assert.doesNotMatch(view.innerHTML,/data-quest-level="B2"/,'B2 hidden in stories');
 buttons[0].click();
 assert.match(view.innerHTML,/Привет,<br>Ева!/);
+assert.match(view.innerHTML,/teacher-home/,'educational pathway is accessible on the home screen');
 assert.match(view.innerHTML,/Следующий шаг Евы/);
 assert.match(view.innerHTML,/Карта Евы/);
 assert.match(view.innerHTML,/Волшебный мир Евы/);
