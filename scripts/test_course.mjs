@@ -23,6 +23,29 @@ vm.runInNewContext(read('wordmemory.js'),{window,Date,Math},{filename:'wordmemor
 vm.runInNewContext(read('teacherpath.js'),{window,Date,Math},{filename:'teacherpath.js'});
 vm.runInNewContext(read('littlebooks.js'),{window,Date,Math},{filename:'littlebooks.js'});
 vm.runInNewContext(read('firstsounds.js'),{window,Date,Math},{filename:'firstsounds.js'});
+vm.runInNewContext(read('learningpassport.js'),{window,Date,Math},{filename:'learningpassport.js'});
+const initialPassport=window.KIDS_LEARNING_PASSPORT.snapshot({seedDone:{},seedMemory:{}},1000);
+assert.equal(initialPassport.counts.words,120,'real data has 120 first vocabulary items');
+assert.equal(initialPassport.counts.seen,0,'no invented mastery for a new child');
+assert.equal(initialPassport.counts.familiar,0,'no fictitious fluent words');
+assert.equal(initialPassport.counts.due,0,'no fake overdue homework');
+const advancedPassport=window.KIDS_LEARNING_PASSPORT.snapshot({
+ seedDone:{'seed-01':true},alphaDone:{'letters-0':true},
+ miniBooks:{'book-01':true},soundFamilies:{'sound-0':true},phraseDone:{'phrase-0':true},
+ seedMemory:{
+  'seedword-01-1':{stage:0,seen:2,correct:0,due:1},
+  'seedword-01-2':{stage:3,seen:5,correct:5,due:10000},
+  'seedword-01-3':{stage:1,seen:2,correct:1,due:800}
+ }},1000);
+assert.equal(advancedPassport.counts.seen,3,'only recorded exposures count');
+assert.equal(advancedPassport.counts.familiar,1,'three review stages counted but not certified');
+assert.equal(advancedPassport.counts.practice,1,'child mistakes remain visible to adult');
+assert.equal(advancedPassport.counts.due,2,'exact due count from genuine review dates');
+assert.equal(advancedPassport.counts.letters,1);
+assert.equal(advancedPassport.counts.books,1);
+assert.equal(advancedPassport.counts.sound,1);
+assert.equal(advancedPassport.counts.phrases,1);
+
 assert.equal(window.KIDS_MINI_READERS.books.length,20,'20 new three-panel early readers');
 assert.equal(window.KIDS_MINI_READERS.books.flatMap(b=>b.pages).length,60,'60 original beginner panels');
 assert.equal(window.KIDS_FIRST_SOUNDS.groups.length,8,'8 early sound families');
@@ -435,6 +458,14 @@ assert.match(view.innerHTML,/id="export-progress"/);
 assert.match(view.innerHTML,/id="import-progress"/);
 assert.match(view.innerHTML,/Прогресс Евы/);
 assert.match(view.innerHTML,/parent-teacher/,'parent area exposes an actionable learning plan');
+assert.match(view.innerHTML,/parent-passport/,'adult can access factual report only after gate');
+view.querySelector('#parent-passport').click();
+assert.match(view.innerHTML,/Учебный паспорт Евы/,'passport opens from adult menu');
+assert.match(view.innerHTML,/Пробовали/);
+assert.match(view.innerHTML,/Совет на сегодня/);
+view.querySelector('#passport-back').click();
+assert.match(view.innerHTML,/Прогресс Евы/,'adult can return to settings');
+
 assert.match(view.innerHTML,/id="toggle-advanced"/);
 assert.equal(JSON.parse(storage).advancedContent,false,'gentle mode is the default');
 view.querySelector('#toggle-advanced').click();
